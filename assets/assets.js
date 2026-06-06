@@ -276,7 +276,7 @@ export const productsDummyData = [
 
 export const userDummyData = {
   "_id": "user_2sZFHS1UIIysJyDVzCpQhUhTIhw",
-  "name": "GreatStack",
+  "name": "N.S Fashion Hub",
   "email": "admin@example.com",
   "imageUrl": "https://img.clerk.com/eyJ0eXBlIjoiZGVmYXVsdCIsImlpZCI6Imluc18ycnlnUnFiUDBYT2dEZ2h1ZmRXcGlpdWV5OXoiLCJyaWQiOiJ1c2VyXzJzWkZIUzFVSUl5c0p5RFZ6Q3BRaFVoVElodyJ9",
   "cartItems": {
@@ -415,12 +415,67 @@ export const addressDummyData = [
   {
     "_id": "67a1e4233f34a77b6dde9055",
     "userId": "user_2sZFHS1UIIysJyDVzCpQhUhTIhw",
-    "fullName": "GreatStack",
+    "fullName": "N.S Fashion Hub",
     "phoneNumber": "0123456789",
-    "pincode": 654321,
-    "area": "Main Road , 123 Street, G Block",
-    "city": "City",
-    "state": "State",
+    "pincode": 44600,
+    "area": "Thamel, Kathmandu",
+    "city": "Kathmandu",
+    "state": "Kathmandu",
+    "__v": 0
+  },
+  {
+    "_id": "67a1e4243f34a77b6dde9056",
+    "userId": "user_2sZFHS1UIIysJyDVzCpQhUhTIhw",
+    "fullName": "N.S Fashion",
+    "phoneNumber": "9841234567",
+    "pincode": 44700,
+    "area": "Durbar Marg, Kathmandu Metropolitan",
+    "city": "Kathmandu",
+    "state": "Kathmandu",
+    "__v": 0
+  },
+  {
+    "_id": "67a1e4253f34a77b6dde9057",
+    "userId": "user_2sZFHS1UIIysJyDVzCpQhUhTIhw",
+    "fullName": "Fashion Store Lalitpur",
+    "phoneNumber": "9842234567",
+    "pincode": 44700,
+    "area": "Patan Durbar Square, Lalitpur",
+    "city": "Lalitpur",
+    "state": "Lalitpur",
+    "__v": 0
+  },
+  {
+    "_id": "67a1e4263f34a77b6dde9058",
+    "userId": "user_2sZFHS1UIIysJyDVzCpQhUhTIhw",
+    "fullName": "Lalitpur Branch",
+    "phoneNumber": "9843234567",
+    "pincode": 44600,
+    "area": "Jawalakhel, Lalitpur Metropolitan",
+    "city": "Lalitpur",
+    "state": "Lalitpur",
+    "__v": 0
+  },
+  {
+    "_id": "67a1e4273f34a77b6dde9059",
+    "userId": "user_2sZFHS1UIIysJyDVzCpQhUhTIhw",
+    "fullName": "Bhaktapur Fashion",
+    "phoneNumber": "9844234567",
+    "pincode": 44800,
+    "area": "Bhaktapur Durbar Square, Bhaktapur",
+    "city": "Bhaktapur",
+    "state": "Bhaktapur",
+    "__v": 0
+  },
+  {
+    "_id": "67a1e4283f34a77b6dde905a",
+    "userId": "user_2sZFHS1UIIysJyDVzCpQhUhTIhw",
+    "fullName": "Bhaktapur Branch",
+    "phoneNumber": "9845234567",
+    "pincode": 44800,
+    "area": "Tachapal, Bhaktapur Metropolitan",
+    "city": "Bhaktapur",
+    "state": "Bhaktapur",
     "__v": 0
   }
 ]
