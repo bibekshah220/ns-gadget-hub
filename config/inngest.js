@@ -1,4 +1,5 @@
 // src/inngest/client.ts
+import { User } from "@clerk/nextjs/server";
 import { Inngest } from "inngest";
 
 export const inngest = new Inngest({ id: "NS-Gadget-Hub" });
@@ -22,6 +23,10 @@ export const syncUserCreation = inngest.createFunction(
             name: `${first_name} ${last_name}`,
             imageUrl: image_url,
         }
+        await connectDB();
+        await User.create(userData);
      }
 );
+
+
  
