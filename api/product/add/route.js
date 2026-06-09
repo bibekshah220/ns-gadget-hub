@@ -34,7 +34,9 @@ try{
     if(!file || file.length === 0) {
         return NextResponse.json({success: false, message: "Image is required"}, {status: 400});
     }  
-    
+    /**
+     * map through the file array and upload each image to cloudinary and get the secure_url of each uploaded image and save it to an array
+     */
     const result = await Promise.all(
         file.map(async (file) => {
             const arryBuffer = await file.arrayBuffer();
@@ -54,6 +56,9 @@ try{
             });
         })
     );
+    /**
+     * map through the result and get the secure_url of each uploaded image and save it to an array
+     */
 
     const image = result.map(result => result.secure_url)
 
