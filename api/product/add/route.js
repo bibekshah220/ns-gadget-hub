@@ -55,8 +55,27 @@ try{
         })
     );
 
+    const image = result.map(result => result.secure_url)
+
+    await connectDB();
+    const newProduct = await Product.create({
+        userId,
+        name,   
+        description,
+        category,
+        price: Number(price),
+        offerPrice: Number(offerPrice),
+        stock: Number(stock),
+        image,
+        date: Date.now(),
+        sellerId: userId,
+    });
+
+    return NextResponse.json({success: true, message: "Product added successfully", product: newProduct}, {status: 201});
+
 }catch (error){
    console.error(error);  
+   return NextResponse.json({success: false, message: "Internal Server Error"}, {status: 500});
 }
 
 }
