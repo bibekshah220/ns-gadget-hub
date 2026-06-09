@@ -35,7 +35,25 @@ try{
         return NextResponse.json({success: false, message: "Image is required"}, {status: 400});
     }  
     
-    
+    const result = await Promise.all(
+        file.map(async (file) => {
+            const arryBuffer = await file.arrayBuffer();
+            const buffer = Buffer.from(arryBuffer);
+            return new Promise((resolve, reject) => {
+                const stream = cloudinary.uploader.upload_stream(
+                    {resource_type: "auto"},
+                    (error, result) => {
+                        if (error) {
+                            reject(error);
+                        } else {
+                            resolve(result.secure_url);
+                        }
+                    }
+                );
+                stream.end(buffer);
+            });
+        })
+    );
 
 }catch (error){
    console.error(error);  
