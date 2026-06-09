@@ -26,10 +26,14 @@ export const AppContextProvider = (props) => {
   };
 
   const fetchUserData = async () => {
-    if(user.publicMetadata.isSeller) {
+    try{
+      if(user.publicMetadata.isSeller) {
       setIsSeller(true);
     }
     setUserData(userDummyData);
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
   };
 
   const addToCart = async (itemId) => {
