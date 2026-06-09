@@ -44,7 +44,6 @@ export const AppContextProvider = (props) => {
       setUserData(false);
     }
 
-    setUserData(userDummyData);
     } catch (error) {
       console.error("Error fetching user data:", error);
     }
