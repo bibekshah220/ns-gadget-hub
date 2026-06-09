@@ -31,6 +31,19 @@ export const AppContextProvider = (props) => {
       if(user.publicMetadata.isSeller) {
       setIsSeller(true);
     }
+    const token = await getToken();
+
+    const {data} = await axios.get("/api/user/data", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if(data.success) {
+      setUserData(data.user);
+    } else {
+      setUserData(false);
+    }
+
     setUserData(userDummyData);
     } catch (error) {
       console.error("Error fetching user data:", error);
