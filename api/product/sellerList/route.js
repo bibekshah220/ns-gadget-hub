@@ -13,8 +13,8 @@ if(!isSeller){
 
 await dbConnect()
 
-const products = 
-
+const products = await Product.find({ seller: userId }).populate("seller", "name email")
+return new Response(JSON.stringify({ success: true, products }), { status: 200 });
 
 
 
