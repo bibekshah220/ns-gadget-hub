@@ -7,6 +7,12 @@ export async function GET() {
 const {userId} = getAuth(request)
 const isSeller = authSeller(userId)
 
+if(!isSeller){
+    return new Response(JSON.stringify({ success: false, message: "Unauthorized" }), { status: 401 });
+}
+
+
+
 
 
 
