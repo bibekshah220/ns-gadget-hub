@@ -11,7 +11,9 @@ if(!isSeller){
     return new Response(JSON.stringify({ success: false, message: "Unauthorized" }), { status: 401 });
 }
 
+await dbConnect()
 
+const products = 
 
 
 
