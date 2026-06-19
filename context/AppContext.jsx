@@ -22,7 +22,7 @@ export const AppContextProvider = (props) => {
   const { getToken } = useAuth();
 
   /* Core client state. */
-  const [products, setProducts] = useState([]); /* All products shown in the store. */
+  const [products, setProducts] = useState([]); 
   const [userData, setUserData] = useState(false); /* Logged-in user's DB record (false = none). */
   const [isSeller, setIsSeller] = useState(false); /* Whether current user has seller access. */
   const [cartItems, setCartItems] = useState({}); /* Cart map: { productId: quantity }. */
