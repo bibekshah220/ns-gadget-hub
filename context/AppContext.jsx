@@ -23,7 +23,7 @@ export const AppContextProvider = (props) => {
 
   /* Core client state. */
   const [products, setProducts] = useState([]); 
-  const [userData, setUserData] = useState(false); /* Logged-in user's DB record (false = none). */
+  const [userData, setUserData] = useState(false); 
   const [isSeller, setIsSeller] = useState(false); /* Whether current user has seller access. */
   const [cartItems, setCartItems] = useState({}); /* Cart map: { productId: quantity }. */
 
