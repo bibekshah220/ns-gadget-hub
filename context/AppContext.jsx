@@ -24,7 +24,7 @@ export const AppContextProvider = (props) => {
   /* Core client state. */
   const [products, setProducts] = useState([]); 
   const [userData, setUserData] = useState(false); 
-  const [isSeller, setIsSeller] = useState(false); /* Whether current user has seller access. */
+  const [isSeller, setIsSeller] = useState(false); 
   const [cartItems, setCartItems] = useState({}); /* Cart map: { productId: quantity }. */
 
   /* Build the Authorization header from the Clerk token for protected requests. */
