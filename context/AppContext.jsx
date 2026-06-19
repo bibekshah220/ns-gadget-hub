@@ -59,44 +59,51 @@ const {data} = await axios.get("/api/product/list");
 
   const addToCart = async (itemId) => {
     try{
-      const token = await getToken();
-      const {data} = await axios.post("/api/user/addToCart", {itemId}, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if(data.success) {
-        setCartItems(data.cartItems);
-      } else {
-        toast.error(data.message);
-      }
+  let cartData = structuredClone(cartItems || {});
+  if (cartData[itemId]) {
+    cartData[itemId] += 1;
+  } else {
+    cartData[itemId] = 1;
+  }
+  setCartItems(cartData);
+  toast.success("Item added to cart successfully");
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to add to cart");
     }
   };
 
   const updateCartQuantity = async (itemId, quantity) => {
-    let cartData = structuredClone(cartItems);
+    try{
+      let cartData = structuredClone(cartItems);
     if (quantity === 0) {
       delete cartData[itemId];
     } else {
       cartData[itemId] = quantity;
     }
     setCartItems(cartData);
-  };
+    toast.success("Cart quantity updated successfully");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update cart quantity");
+    }
+    };
 
   const getCartCount = () => {
-    let totalCount = 0;
+    try{
+      let totalCount = 0;
     for (const items in cartItems) {
       if (cartItems[items] > 0) {
         totalCount += cartItems[items];
       }
     }
     return totalCount;
-  };
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to get cart count");
+    }
+      };
 
   const getCartAmount = () => {
-    let totalAmount = 0;
+    try{
+      let totalAmount = 0;
     for (const items in cartItems) {
       let itemInfo = products.find((product) => product._id === items);
       if (cartItems[items] > 0) {
@@ -104,7 +111,10 @@ const {data} = await axios.get("/api/product/list");
       }
     }
     return Math.floor(totalAmount * 100) / 100;
-  };
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to get cart amount");
+    }
+    };
 
   useEffect(() => {
     fetchProductData();
