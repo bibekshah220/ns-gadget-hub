@@ -58,13 +58,21 @@ const {data} = await axios.get("/api/product/list");
   };
 
   const addToCart = async (itemId) => {
-    let cartData = structuredClone(cartItems);
-    if (cartData[itemId]) {
-      cartData[itemId] += 1;
-    } else {
-      cartData[itemId] = 1;
+    try{
+      const token = await getToken();
+      const {data} = await axios.post("/api/user/addToCart", {itemId}, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if(data.success) {
+        setCartItems(data.cartItems);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to add to cart");
     }
-    setCartItems(cartData);
   };
 
   const updateCartQuantity = async (itemId, quantity) => {
