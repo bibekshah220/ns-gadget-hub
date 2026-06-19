@@ -1,5 +1,4 @@
 "use client";
-import { productsDummyData, userDummyData } from "@/assets/assets";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
@@ -17,17 +16,28 @@ export const AppContextProvider = (props) => {
   const router = useRouter();
 
   const { user } = useUser();
-  const {getToken} = useAuth();
+  const { getToken } = useAuth();
 
   const [products, setProducts] = useState([]);
   const [userData, setUserData] = useState(false);
   const [isSeller, setIsSeller] = useState(false);
   const [cartItems, setCartItems] = useState({});
 
-  const fetchProductData = async () => {
-    try{
+  const getAuthHeaders = async () => {
+    const token = await getToken();
 
-const {data} = await axios.get("/api/product/list");
+    if (!token) {
+      throw new Error("Unauthorized");
+    }
+
+    return {
+      Authorization: `Bearer ${token}`,
+    };
+  };
+
+  const fetchProductData = async () => {
+    try {
+      const { data } = await axios.get("/api/product/list");
       if (data.success) {
         setProducts(data.products);
       } else {
@@ -39,92 +49,122 @@ const {data} = await axios.get("/api/product/list");
   };
 
   const fetchUserData = async () => {
-    try{
-      const token = await getToken();
-      const {data} = await axios.get("/api/user/data", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+    try {
+      const headers = await getAuthHeaders();
+      const { data } = await axios.get("/api/user/data", {
+        headers,
       });
-      if(data.success) {
+      if (data.success) {
         setUserData(data.user);
-        setCartItems(data.user.cartItems);
+        setCartItems(data.user.cartItems || {});
       } else {
         toast.error(data.message);
       }
     } catch (error) {
-      console.error("Error fetching user data:", error);
+      toast.error(
+        error.response?.data?.message || "Failed to fetch user account data",
+      );
+    }
+  };
+
+  const syncCartWithServer = async (nextCart) => {
+    const headers = await getAuthHeaders();
+
+    const { data } = await axios.post(
+      "/api/cart/update",
+      { cartData: nextCart },
+      { headers },
+    );
+
+    if (!data.success) {
+      throw new Error(data.message || "Failed to update cart");
     }
   };
 
   const addToCart = async (itemId) => {
-    try{
-  let cartData = structuredClone(cartItems || {});
-  if (cartData[itemId]) {
-    cartData[itemId] += 1;
-  } else {
-    cartData[itemId] = 1;
-  }
-  setCartItems(cartData);
-  toast.success("Item added to cart successfully");
+    try {
+      const cartData = structuredClone(cartItems || {});
+      cartData[itemId] = (cartData[itemId] || 0) + 1;
+
+      setCartItems(cartData);
+
+      if (user) {
+        await syncCartWithServer(cartData);
+      }
+
+      toast.success("Item added to cart successfully");
     } catch (error) {
+      if (user) {
+        await fetchUserData();
+      }
       toast.error(error.response?.data?.message || "Failed to add to cart");
     }
   };
 
   const updateCartQuantity = async (itemId, quantity) => {
-    try{
-      let cartData = structuredClone(cartItems);
-    if (quantity === 0) {
-      delete cartData[itemId];
-    } else {
-      cartData[itemId] = quantity;
-    }
-    setCartItems(cartData);
-    toast.success("Cart quantity updated successfully");
+    try {
+      const cartData = structuredClone(cartItems || {});
+
+      if (quantity === 0) {
+        delete cartData[itemId];
+      } else {
+        cartData[itemId] = quantity;
+      }
+
+      setCartItems(cartData);
+
+      if (user) {
+        await syncCartWithServer(cartData);
+      }
     } catch (error) {
+      if (user) {
+        await fetchUserData();
+      }
       toast.error(error.response?.data?.message || "Failed to update cart quantity");
     }
-    };
+  };
 
   const getCartCount = () => {
-    try{
-      let totalCount = 0;
-    for (const items in cartItems) {
-      if (cartItems[items] > 0) {
-        totalCount += cartItems[items];
+    let totalCount = 0;
+
+    for (const itemId in cartItems) {
+      if (cartItems[itemId] > 0) {
+        totalCount += cartItems[itemId];
       }
     }
+
     return totalCount;
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to get cart count");
-    }
-      };
+  };
 
   const getCartAmount = () => {
-    try{
-      let totalAmount = 0;
-    for (const items in cartItems) {
-      let itemInfo = products.find((product) => product._id === items);
-      if (cartItems[items] > 0) {
-        totalAmount += itemInfo.offerPrice * cartItems[items];
+    let totalAmount = 0;
+
+    for (const itemId in cartItems) {
+      const itemInfo = products.find((product) => product._id === itemId);
+
+      if (!itemInfo || cartItems[itemId] <= 0) {
+        continue;
       }
+
+      totalAmount += itemInfo.offerPrice * cartItems[itemId];
     }
+
     return Math.floor(totalAmount * 100) / 100;
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to get cart amount");
-    }
-    };
+  };
 
   useEffect(() => {
     fetchProductData();
   }, []);
 
- useEffect(() => {
-  if (user) {
-    fetchUserData();
-  }
-}, [user]);
+  useEffect(() => {
+    if (user) {
+      fetchUserData();
+    } else {
+      setUserData(false);
+      setCartItems({});
+    }
+  }, [user]);
+
   const value = {
     user,
     getToken,
