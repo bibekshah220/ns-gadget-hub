@@ -3,6 +3,12 @@ import { getAuth } from "@clerk/nextjs/server";
 import connectToDatabase from "@/config/db";
 import User from "@/models/User";
 
+/**
+ * Handles the GET request to fetch user data.
+ * @param {Request} req 
+ * @returns {Promise<Response>}
+ */
+
 export async function GET(req) {
   try {
     const { userId } = getAuth(req);
