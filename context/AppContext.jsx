@@ -3,6 +3,8 @@ import { productsDummyData, userDummyData } from "@/assets/assets";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 export const AppContext = createContext();
 
@@ -23,28 +25,33 @@ export const AppContextProvider = (props) => {
   const [cartItems, setCartItems] = useState({});
 
   const fetchProductData = async () => {
-    setProducts(productsDummyData);
+    try{
+
+const {data} = await axios.get("/api/product/list");
+      if (data.success) {
+        setProducts(data.products);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to fetch product data");
+    }
   };
 
   const fetchUserData = async () => {
     try{
-      if(user.publicMetadata.isSeller) {
-      setIsSeller(true);
-    }
-    const token = await getToken();
-
-    const {data} = await axios.get("/api/user/data", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    if(data.success) {
-      setUserData(data.user);
-      setCartItems(data.user.cartItems);
-    } else {
-      toast.error("Failed to fetch user data");
-    }
-
+      const token = await getToken();
+      const {data} = await axios.get("/api/user/data", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if(data.success) {
+        setUserData(data.user);
+        setCartItems(data.user.cartItems);
+      } else {
+        toast.error(data.message);
+      }
     } catch (error) {
       console.error("Error fetching user data:", error);
     }
