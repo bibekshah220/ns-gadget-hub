@@ -10,10 +10,8 @@ const Footer = () => {
             <span className="text-orange-600">N.S</span> Gadget Hub
           </span>
           <p className="mt-6 text-sm">
-            Lorem Ipsum is simply dummy text of the printing and typesetting
-            industry. Lorem Ipsum has been the industry's standard dummy text
-            ever since the 1500s, when an unknown printer took a galley of type
-            and scrambled it to make a type specimen book.
+            Your one-stop destination for the latest gadgets and tech
+            accessories. Quality products delivered right to your door.
           </p>
         </div>
 
@@ -83,7 +81,7 @@ const Footer = () => {
         </div>
       </div>
       <p className="py-4 text-center text-xs md:text-sm">
-        Copyright 2025 © N.S Gadget Hub All Rights Reserved.
+        Copyright 2026 © N.S Gadget Hub All Rights Reserved.
       </p>
     </footer>
   );
