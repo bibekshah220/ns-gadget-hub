@@ -22,10 +22,6 @@ const addressSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  street: {
-    type: String,
-    required: true,
-  },
   city: {
     type: String,
     required: true,
@@ -34,11 +30,6 @@ const addressSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  zipCode: {
-    type: String,
-    required: true,     
-
- }
 });
 
 const Address = mongoose.models.Address || mongoose.model("Address", addressSchema);
