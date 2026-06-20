@@ -19,10 +19,8 @@ export async function POST(req) {
       phoneNumber,
       pinCode,
       area,
-      street,
       city,
       state,
-      zipCode,
     } = await req.json();
 
     if (
@@ -30,10 +28,8 @@ export async function POST(req) {
       !phoneNumber ||
       !pinCode ||
       !area ||
-      !street ||
       !city ||
-      !state ||
-      !zipCode
+      !state
     ) {
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
@@ -49,10 +45,8 @@ export async function POST(req) {
       phoneNumber,
       pinCode,
       area,
-      street,
       city,
       state,
-      zipCode,
     });
 
     await newAddress.save();
