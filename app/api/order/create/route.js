@@ -2,7 +2,11 @@ import { getAuth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/config/db";
 import Product from "@/models/product";
-import Order from "@/models/oder";
+import User from "@/models/User";
+import { inngest } from "@/config/inngest";
+
+/* Nepal levies 13% VAT on the order subtotal. */
+const NEPAL_VAT_RATE = 0.13;
 
 export async function POST(req) {
   try {
@@ -33,9 +37,9 @@ export async function POST(req) {
       products.map((product) => [product._id.toString(), product]),
     );
 
-    /* Build order line items and compute the total from trusted DB prices. */
+    /* Build order line items and compute the subtotal from trusted DB prices. */
     const orderProducts = [];
-    let totalAmount = 0;
+    let subtotal = 0;
 
     for (const item of items) {
       const product = productMap.get(String(item.product));
@@ -57,18 +61,30 @@ export async function POST(req) {
       }
 
       orderProducts.push({ productId: product._id.toString(), quantity });
-      totalAmount += product.offerPrice * quantity;
+      subtotal += product.offerPrice * quantity;
     }
 
-    const order = await Order.create({
-      userId,
-      addressId: address,
-      products: orderProducts,
-      totalAmount,
+    /* Apply Nepal VAT (13%) on top of the subtotal. */
+    const tax = Math.floor(subtotal * NEPAL_VAT_RATE);
+    const totalAmount = subtotal + tax;
+
+    /* Hand persistence to Inngest so the write happens exactly once, off-request. */
+    await inngest.send({
+      name: "order/created",
+      data: {
+        userId,
+        addressId: address,
+        products: orderProducts,
+        totalAmount,
+        date: Date.now(),
+      },
     });
 
+    /* Clear the user's cart now that the order has been queued. */
+    await User.findByIdAndUpdate(userId, { cartItems: {} });
+
     return NextResponse.json(
-      { success: true, message: "Order placed successfully", order },
+      { success: true, message: "Order placed successfully" },
       { status: 201 },
     );
   } catch (error) {
