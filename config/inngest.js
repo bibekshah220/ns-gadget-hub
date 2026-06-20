@@ -98,23 +98,3 @@ export const createUserOrder = inngest.createFunction(
         return { success: true, processed: orders.length };
     }
 );
-export const createOrder = inngest.createFunction(
-    {
-        id: "create-order",
-    },
-    {
-        event: "order.created",
-    },
-    async ({ event }) => {
-        const { userId, addressId, items } = event.data;
-        await connectDB();
-        await Order.create({
-            userId,
-            addressId,
-            products: items.map((item) => ({
-                productId: item.product,
-                quantity: item.quantity,
-            })),
-        });
-    }
-);
