@@ -1,30 +1,115 @@
-import { addressDummyData } from "@/assets/assets";
 import { useAppContext } from "@/context/AppContext";
+import axios from "axios";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+
 const OrderSummary = () => {
 
-  const { currency, router, getCartCount, getCartAmount } = useAppContext()
+  const {
+    currency,
+    router,
+    user,
+    getToken,
+    cartItems,
+    setCartItems,
+    getCartCount,
+    getCartAmount,
+  } = useAppContext();
+
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
   const [userAddresses, setUserAddresses] = useState([]);
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
+  /* Build the Authorization header from the Clerk token for protected requests. */
+  const getAuthHeaders = async () => {
+    const token = await getToken();
+
+    if (!token) {
+      throw new Error("Unauthorized");
+    }
+
+    return { Authorization: `Bearer ${token}` };
+  };
+
+  /* Load the signed-in user's saved addresses for the dropdown. */
   const fetchUserAddresses = async () => {
-    setUserAddresses(addressDummyData);
-  }
+    try {
+      const headers = await getAuthHeaders();
+      const { data } = await axios.get("/api/user/get-address", { headers });
+
+      if (data.success) {
+        setUserAddresses(data.address);
+
+        if (data.address.length > 0) {
+          setSelectedAddress(data.address[0]);
+        }
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Failed to fetch addresses",
+      );
+    }
+  };
 
   const handleAddressSelect = (address) => {
     setSelectedAddress(address);
     setIsDropdownOpen(false);
   };
 
+  /* Validate the cart and address, then submit the order to the backend. */
   const createOrder = async () => {
+    if (isPlacingOrder) {
+      return;
+    }
 
-  }
+    if (!selectedAddress) {
+      toast.error("Please select a delivery address");
+      return;
+    }
 
+    /* Flatten the cart map into a list of { product, quantity } line items. */
+    const items = Object.keys(cartItems)
+      .map((product) => ({ product, quantity: cartItems[product] }))
+      .filter((item) => item.quantity > 0);
+
+    if (items.length === 0) {
+      toast.error("Your cart is empty");
+      return;
+    }
+
+    try {
+      setIsPlacingOrder(true);
+      const headers = await getAuthHeaders();
+
+      const { data } = await axios.post(
+        "/api/order/create",
+        { address: selectedAddress._id, items },
+        { headers },
+      );
+
+      if (data.success) {
+        toast.success(data.message || "Order placed successfully");
+        setCartItems({});
+        router.push("/order-placed");
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to place order");
+    } finally {
+      setIsPlacingOrder(false);
+    }
+  };
+
+  /* Fetch addresses once the user is available. */
   useEffect(() => {
-    fetchUserAddresses();
-  }, [])
+    if (user) {
+      fetchUserAddresses();
+    }
+  }, [user]);
 
   return (
     <div className="w-full md:w-96 bg-gray-500/5 p-5">
@@ -114,8 +199,12 @@ const OrderSummary = () => {
         </div>
       </div>
 
-      <button onClick={createOrder} className="w-full bg-orange-600 text-white py-3 mt-5 hover:bg-orange-700">
-        Place Order
+      <button
+        onClick={createOrder}
+        disabled={isPlacingOrder}
+        className="w-full bg-orange-600 text-white py-3 mt-5 hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {isPlacingOrder ? "Placing Order..." : "Place Order"}
       </button>
     </div>
   );
