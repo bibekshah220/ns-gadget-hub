@@ -4,6 +4,9 @@ import connectToDatabase from "@/config/db";
 import Product from "@/models/product";
 import Order from "@/models/oder";
 
+/* Nepal levies 13% VAT on the order subtotal. */
+const NEPAL_VAT_RATE = 0.13;
+
 /* Compute order line items and total from trusted DB prices, not client input. */
 async function calculateTotalAmount(items) {
   const productIds = items.map((item) => item.product);
@@ -13,7 +16,7 @@ async function calculateTotalAmount(items) {
   );
 
   const orderProducts = [];
-  let totalAmount = 0;
+  let subtotal = 0;
 
   for (const item of items) {
     const product = productMap.get(String(item.product));
@@ -29,10 +32,14 @@ async function calculateTotalAmount(items) {
     }
 
     orderProducts.push({ productId: product._id.toString(), quantity });
-    totalAmount += product.offerPrice * quantity;
+    subtotal += product.offerPrice * quantity;
   }
 
-  return { orderProducts, totalAmount };
+  /* Apply Nepal VAT (13%) on top of the subtotal. */
+  const tax = Math.floor(subtotal * NEPAL_VAT_RATE);
+  const totalAmount = subtotal + tax;
+
+  return { orderProducts, subtotal, tax, totalAmount };
 }
 
 export async function POST(req) {
