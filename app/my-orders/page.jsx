@@ -1,6 +1,8 @@
 'use client';
 import { useEffect, useState } from "react";
-import { assets, orderDummyData } from "@/assets/assets";
+import axios from "axios";
+import toast from "react-hot-toast";
+import { assets } from "@/assets/assets";
 import Image from "next/image";
 import { useAppContext } from "@/context/AppContext";
 import Footer from "@/components/Footer";
@@ -9,19 +11,35 @@ import Loading from "@/components/Loading";
 
 const MyOrders = () => {
 
-    const { currency } = useAppContext();
+    const { currency, user, getToken } = useAppContext();
 
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const fetchOrders = async () => {
-        setOrders(orderDummyData)
-        setLoading(false);
+        try {
+            const token = await getToken();
+            const { data } = await axios.get("/api/order/list", {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (data.success) {
+                setOrders(data.orders);
+            } else {
+                toast.error(data.message);
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to fetch orders");
+        } finally {
+            setLoading(false);
+        }
     }
 
     useEffect(() => {
-        fetchOrders();
-    }, []);
+        if (user) {
+            fetchOrders();
+        }
+    }, [user]);
 
     return (
         <>
