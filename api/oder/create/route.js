@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import connectToDatabase from "@/config/db";
 import Product from "@/models/product";
 import Order from "@/models/oder";
+import User from "@/models/User";
 
 /* Nepal levies 13% VAT on the order subtotal. */
 const NEPAL_VAT_RATE = 0.13;
@@ -73,6 +74,9 @@ export async function POST(req) {
       addressId: address,
     });
     await order.save();
+
+    /* Empty the user's cart now that the order is placed. */
+    await User.findByIdAndUpdate(userId, { cartItems: {} });
 
     return NextResponse.json(
       { success: true, message: "Order placed successfully" },
