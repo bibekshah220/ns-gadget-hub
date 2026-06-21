@@ -87,7 +87,7 @@ const OrderSummary = () => {
       const { data } = await axios.post(
         "/api/order/create",
         { address: selectedAddress._id, items },
-        { headers },
+        { headers, timeout: 5000 },
       );
 
       if (data.success) {
