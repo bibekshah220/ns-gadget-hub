@@ -98,32 +98,3 @@ export const createUserOrder = inngest.createFunction(
         return { success: true, processed: orders.length };
     }
 );
-/**
- * inngest function to create users in database
- */
-
-export const createUserOder = inngest.createFunction(
-    {
-        id: "create-user-order",
-        batchEvents: {
-            maxSize: 5,
-            timeout: "5s",
-        },
-    },
-    {
-        event: "order/created",
-    },
-    async ({ events }) => {
-        const orders = events.map((event) => ({
-            userId: event.data.userId,
-            addressId: event.data.addressId,
-            products: event.data.products,
-            totalAmount: event.data.totalAmount,
-        }));
-
-        await connectToDatabase();
-        await Order.insertMany(orders);
-
-        return { success: true, processed: orders.length };
-    }
-);  

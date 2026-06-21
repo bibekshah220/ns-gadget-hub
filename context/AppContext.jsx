@@ -32,7 +32,7 @@ export const AppContextProvider = (props) => {
     const token = await getToken();
 
     if (!token) {
-      throw new Error("Unauthorized");s
+      throw new Error("Unauthorized");
     }
 
     return {
@@ -168,6 +168,11 @@ export const AppContextProvider = (props) => {
   useEffect(() => {
     fetchProductData();
   }, []);
+
+  /* Reflect the Clerk role so seller-only UI can gate on it. */
+  useEffect(() => {
+    setIsSeller(user?.publicMetadata?.role === "seller");
+  }, [user]);
 
   /* Load user data when signed in; clear it on sign-out. */
   useEffect(() => {

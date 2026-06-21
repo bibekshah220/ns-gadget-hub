@@ -17,11 +17,9 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
     },
     imageUrl: {
       type: String,
-      required: true,
     },
     role: {
       type: String,
@@ -36,6 +34,6 @@ const userSchema = new mongoose.Schema(
   { minimize: false, timestamps: true },
 );
 
-const User =mongoose.model.User || mongoose.model("User", userSchema);
+const User =mongoose.models.User || mongoose.model("User", userSchema);
 
 export default User;
