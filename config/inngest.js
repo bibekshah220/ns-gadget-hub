@@ -2,7 +2,7 @@
 import { Inngest } from "inngest";
 import connectToDatabase from "@/config/db";
 import User from "@/models/User";
-import Order from "@/models/oder";
+import Order from "@/models/order";
 
 export const inngest = new Inngest({ id: "NS-Gadget-Hub" });
 
@@ -86,10 +86,13 @@ export const createUserOrder = inngest.createFunction(
     },
     async ({ events }) => {
         const orders = events.map((event) => ({
+            _id: event.data._id,
             userId: event.data.userId,
             addressId: event.data.addressId,
             products: event.data.products,
             totalAmount: event.data.totalAmount,
+            paymentMethod: event.data.paymentMethod,
+            paymentStatus: event.data.paymentStatus,
         }));
 
         await connectToDatabase();
