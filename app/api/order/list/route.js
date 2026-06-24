@@ -1,7 +1,7 @@
 import { getAuth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/config/db";
-import Order from "@/models/oder";
+import Order from "@/models/order";
 import Product from "@/models/product";
 import Address from "@/models/address";
 
