@@ -5,6 +5,19 @@ import connectToDatabase from "@/config/db";
 import authSeller from "@/lib/authSeller";
 import Product from "@/models/product";
 
+const ALLOWED_CATEGORIES = [
+  "Earphone",
+  "Headphone",
+  "Watch",
+  "Smartphone",
+  "Laptop",
+  "Camera",
+  "Accessories",
+  "Full Stack",
+  "Backend",
+  "Frontend",
+];
+
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -50,6 +63,13 @@ export async function POST(req) {
     if (!files || files.length === 0) {
       return NextResponse.json(
         { success: false, message: "At least one image is required" },
+        { status: 400 },
+      );
+    }
+
+    if (!ALLOWED_CATEGORIES.includes(String(category))) {
+      return NextResponse.json(
+        { success: false, message: "Invalid category" },
         { status: 400 },
       );
     }
