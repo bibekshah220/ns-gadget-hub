@@ -1,5 +1,18 @@
 import mongoose from "mongoose";
 
+const ALLOWED_CATEGORIES = [
+    "Earphone",
+    "Headphone",
+    "Watch",
+    "Smartphone",
+    "Laptop",
+    "Camera",
+    "Accessories",
+    "Full Stack",
+    "Backend",
+    "Frontend",
+];
+
 const productSchema = new mongoose.Schema(
     {
         userId: {
@@ -17,6 +30,7 @@ const productSchema = new mongoose.Schema(
         category: {
             type: String,
             required: true,
+            enum: ALLOWED_CATEGORIES,
         },
         price: {
             type: Number,
