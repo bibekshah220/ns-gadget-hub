@@ -57,6 +57,15 @@ const productSchema = new mongoose.Schema(
             required: true,
             default: Date.now,
         },
+        /* Denormalised from reviews so product grids need no second query. */
+        ratingAvg: {
+            type: Number,
+            default: 0,
+        },
+        ratingCount: {
+            type: Number,
+            default: 0,
+        },
     },
     { timestamps: true },
 );
