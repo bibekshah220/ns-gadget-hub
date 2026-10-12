@@ -1,15 +1,13 @@
+import { NextResponse } from "next/server";
 import connectToDatabase from "@/config/db";
 import Address from "@/models/address";
-import { getAuth } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
-
-
+import { requireAuth } from "@/lib/auth";
 
 export async function GET(req) {
   try {
-    const { userId } = getAuth(req);
+    const user = await requireAuth(req);
 
-    if (!userId) {
+    if (!user) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
         { status: 401 },
@@ -17,11 +15,13 @@ export async function GET(req) {
     }
 
     await connectToDatabase();
-    const address = await Address.find({ userId }); 
+    const address = await Address.find({ userId: String(user._id) }).lean();
+
     return NextResponse.json({ success: true, address }, { status: 200 });
   } catch (error) {
+    console.error("Get address error:", error);
     return NextResponse.json(
-      { success: false, message: error.message },
+      { success: false, message: "Could not load addresses" },
       { status: 500 },
     );
   }
