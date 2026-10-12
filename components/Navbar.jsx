@@ -6,25 +6,44 @@ import Image from "next/image";
 import { useState } from "react";
 
 const CartIcon = () => (
-  <Image src={assets.cart_icon} alt="cart" width={16} height={16} />
+  <Image src={assets.cart_icon} alt="" width={16} height={16} />
 );
 const BagIcon = () => (
-  <Image src={assets.order_icon} alt="orders" width={16} height={16} />
+  <Image src={assets.order_icon} alt="" width={16} height={16} />
 );
+
+/* Every header control is at least 44x44 so it stays tappable on a phone. */
+const tapTarget =
+  "inline-flex items-center justify-center min-w-11 min-h-11 rounded hover:text-gray-900 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-700 focus-visible:ring-offset-2";
 
 const Navbar = () => {
 
-  const { isSeller, router, user, logout } = useAppContext();
+  const { isSeller, router, user, logout, getCartCount } = useAppContext();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const cartCount = getCartCount();
+
+  const onSearch = (event) => {
+    event.preventDefault();
+    const term = searchTerm.trim();
+
+    if (!term) return;
+
+    setIsSearchOpen(false);
+    router.push(`/all-products?search=${encodeURIComponent(term)}`);
+  };
 
   const AccountMenu = () => (
     <div className="relative">
       <button
         onClick={() => setIsAccountMenuOpen((prev) => !prev)}
-        className="flex items-center gap-2 hover:text-gray-900 transition"
+        aria-expanded={isAccountMenuOpen}
+        className={`${tapTarget} gap-2 px-2`}
       >
-        <Image src={assets.user_icon} alt="user icon" />
+        <Image src={assets.user_icon} alt="" />
         <span className="max-md:hidden">{user.name?.split(" ")[0]}</span>
       </button>
 
@@ -57,14 +76,14 @@ const Navbar = () => {
   );
 
   return (
-    <nav className="px-6 md:px-16 lg:px-32 py-3 border-b border-gray-300 text-gray-700">
-      <div className="flex items-center justify-between">
-        <span
-          onClick={() => router.push('/')}
-          className="cursor-pointer text-xl md:text-2xl font-bold select-none"
+    <nav className="sticky top-0 z-40 bg-white px-6 md:px-16 lg:px-32 py-3 border-b border-gray-300 text-gray-700">
+      <div className="flex items-center justify-between gap-4">
+        <Link
+          href="/"
+          className="text-xl md:text-2xl font-bold select-none rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-700 focus-visible:ring-offset-2"
         >
           <span className="text-orange-600">N.S</span> Gadget Hub
-        </span>
+        </Link>
         <div className="flex items-center gap-4 lg:gap-8 max-md:hidden">
           <Link href="/" className="hover:text-gray-900 transition">
             Home
@@ -83,33 +102,71 @@ const Navbar = () => {
 
         </div>
 
-        <ul className="hidden md:flex items-center gap-4 ">
-          <Image className="w-4 h-4" src={assets.search_icon} alt="" />
-          {user ? <AccountMenu /> : (
-            <button onClick={() => router.push('/login')} className="flex items-center gap-2 hover:text-gray-900 transition">
-              <Image src={assets.user_icon} alt="user icon" />
-              Account
-            </button>
-          )}
-        </ul>
+        {/* One actions row for both breakpoints. The account control used to be
+            written twice, shipping a duplicate button on every screen. */}
+        <div className="flex items-center gap-1 sm:gap-2">
+          <button
+            onClick={() => setIsSearchOpen((prev) => !prev)}
+            aria-label="Search"
+            aria-expanded={isSearchOpen}
+            className={tapTarget}
+          >
+            <Image className="w-4 h-4" src={assets.search_icon} alt="" />
+          </button>
 
-        <div className="flex items-center md:hidden gap-3">
+          <Link
+            href="/cart"
+            aria-label={`Cart, ${cartCount} ${cartCount === 1 ? "item" : "items"}`}
+            className={`${tapTarget} relative`}
+          >
+            <Image className="w-5 h-5" src={assets.cart_icon} alt="" />
+            {cartCount > 0 && (
+              <span
+                aria-hidden="true"
+                className="absolute top-0.5 right-0 min-w-5 h-5 px-1 grid place-items-center rounded-full bg-orange-700 text-white text-[11px] font-medium"
+              >
+                {cartCount > 99 ? "99+" : cartCount}
+              </span>
+            )}
+          </Link>
+
           {user ? <AccountMenu /> : (
-            <button onClick={() => router.push('/login')} className="flex items-center gap-2 hover:text-gray-900 transition">
-              <Image src={assets.user_icon} alt="user icon" />
+            <Link href="/login" className={`${tapTarget} gap-2 px-2`}>
+              <Image src={assets.user_icon} alt="" />
               Account
-            </button>
+            </Link>
           )}
 
           <button
             onClick={() => setIsMobileMenuOpen((prev) => !prev)}
             aria-label="Toggle mobile menu"
-            className="p-1"
+            aria-expanded={isMobileMenuOpen}
+            className={`${tapTarget} md:hidden`}
           >
-            <Image src={assets.menu_icon} alt="menu icon" width={18} height={18} />
+            <Image src={assets.menu_icon} alt="" width={18} height={18} />
           </button>
         </div>
       </div>
+
+      {isSearchOpen && (
+        <form onSubmit={onSearch} className="mt-3 flex items-center gap-2">
+          <input
+            autoFocus
+            type="search"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Search gadgets"
+            aria-label="Search products"
+            className="w-full h-11 px-3 border border-gray-300 rounded outline-none focus:border-orange-700"
+          />
+          <button
+            type="submit"
+            className="h-11 px-4 rounded bg-orange-700 text-white hover:bg-orange-800 transition"
+          >
+            Search
+          </button>
+        </form>
+      )}
 
       {isMobileMenuOpen && (
         <div className="md:hidden mt-3 pt-3 border-t border-gray-200 flex flex-col gap-3">
