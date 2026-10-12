@@ -7,13 +7,17 @@ import Image from "next/image";
 import { useAppContext } from "@/context/AppContext";
 import Footer from "@/components/seller/Footer";
 import Loading from "@/components/Loading";
+import { OrderStatusBadge } from "@/components/OrderStatus";
+import { formatNpr } from "@/lib/money";
+import { CANCELLABLE_FROM, NEXT_ACTION_LABEL, NEXT_STATUS } from "@/lib/orderStatus";
 
 const Orders = () => {
 
-    const { currency, user } = useAppContext();
+    const { user } = useAppContext();
 
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [savingId, setSavingId] = useState(null);
 
     const fetchSellerOrders = async () => {
         try {
@@ -31,6 +35,36 @@ const Orders = () => {
         }
     }
 
+    const updateStatus = async (orderId, status) => {
+        setSavingId(orderId);
+
+        try {
+            const { data } = await axios.post("/api/order/update-status", { orderId, status });
+
+            if (!data.success) {
+                toast.error(data.message);
+                return;
+            }
+
+            /* Patch the row in place rather than refetching the whole list. */
+            setOrders((prev) => prev.map((order) => (
+                order._id === orderId ? { ...order, status: data.status } : order
+            )));
+
+            toast.success(
+                status === "approved"
+                    ? "Order approved. The buyer has been notified."
+                    : status === "completed"
+                        ? "Order completed. The buyer has been notified."
+                        : "Order updated.",
+            );
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to update the order");
+        } finally {
+            setSavingId(null);
+        }
+    };
+
     useEffect(() => {
         if (user) {
             fetchSellerOrders();
@@ -42,8 +76,12 @@ const Orders = () => {
             {loading ? <Loading /> : <div className="md:p-10 p-4 space-y-5">
                 <h2 className="text-lg font-medium">Orders</h2>
                 <div className="max-w-4xl rounded-md">
-                    {orders.map((order, index) => (
-                        <div key={index} className="flex flex-col md:flex-row gap-5 justify-between p-5 border-t border-gray-300">
+                    {orders.map((order) => {
+                        const next = NEXT_STATUS[order.status];
+                        const busy = savingId === order._id;
+
+                        return (
+                        <div key={order._id} className="flex flex-col md:flex-row gap-5 justify-between p-5 border-t border-gray-300">
                             <div className="flex-1 flex gap-5 max-w-80">
                                 <Image
                                     className="max-w-16 max-h-16 object-cover"
@@ -68,16 +106,38 @@ const Orders = () => {
                                     <span>{order.address.phoneNumber}</span>
                                 </p>
                             </div>
-                            <p className="font-medium my-auto">{currency}{order.amount}</p>
-                            <div>
+                            <p className="font-medium my-auto">{formatNpr(order.amount)}</p>
+                            <div className="flex flex-col gap-2">
                                 <p className="flex flex-col">
-                                    <span>Method : COD</span>
+                                    <span>Method : {order.paymentMethod}</span>
                                     <span>Date : {new Date(order.date).toLocaleDateString()}</span>
-                                    <span>Payment : Pending</span>
+                                    <span>Payment : {order.paymentStatus}</span>
                                 </p>
+                                <OrderStatusBadge status={order.status} />
+                                <div className="flex flex-wrap gap-2">
+                                    {next && (
+                                        <button
+                                            onClick={() => updateStatus(order._id, next)}
+                                            disabled={busy}
+                                            className="min-h-11 px-4 rounded bg-orange-700 text-white hover:bg-orange-800 transition disabled:opacity-60"
+                                        >
+                                            {busy ? "Saving..." : NEXT_ACTION_LABEL[next]}
+                                        </button>
+                                    )}
+                                    {CANCELLABLE_FROM.includes(order.status) && (
+                                        <button
+                                            onClick={() => updateStatus(order._id, "cancelled")}
+                                            disabled={busy}
+                                            className="min-h-11 px-4 rounded border border-gray-300 text-gray-600 hover:bg-gray-50 transition disabled:opacity-60"
+                                        >
+                                            Cancel
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>}
             <Footer />

@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { assets } from "@/assets/assets";
@@ -8,35 +8,69 @@ import { useAppContext } from "@/context/AppContext";
 import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
 import Loading from "@/components/Loading";
+import { OrderStatusBadge, OrderTracker } from "@/components/OrderStatus";
+import { formatNpr } from "@/lib/money";
+import { isTerminal, STATUS_LABELS } from "@/lib/orderStatus";
+
+/* Orders move while the buyer is looking at them, so the list refreshes on a
+   timer and tells them what changed. */
+const POLL_MS = 30000;
 
 const MyOrders = () => {
 
-    const { currency, user } = useAppContext();
+    const { user } = useAppContext();
 
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
+    const knownStatuses = useRef(null);
 
-    const fetchOrders = async () => {
+    const fetchOrders = useCallback(async ({ announce = false } = {}) => {
         try {
             const { data } = await axios.get("/api/order/list");
 
-            if (data.success) {
-                setOrders(data.orders);
-            } else {
+            if (!data.success) {
                 toast.error(data.message);
+                return;
             }
+
+            if (announce && knownStatuses.current) {
+                for (const order of data.orders) {
+                    const previous = knownStatuses.current.get(order._id);
+
+                    if (previous && previous !== order.status) {
+                        toast.success(
+                            `Order ${String(order._id).slice(-8).toUpperCase()} is now ${STATUS_LABELS[order.status]}`,
+                        );
+                    }
+                }
+            }
+
+            knownStatuses.current = new Map(data.orders.map((order) => [order._id, order.status]));
+            setOrders(data.orders);
         } catch (error) {
-            toast.error(error.response?.data?.message || "Failed to fetch orders");
+            if (!announce) {
+                toast.error(error.response?.data?.message || "Failed to fetch orders");
+            }
         } finally {
             setLoading(false);
         }
-    }
+    }, []);
 
     useEffect(() => {
-        if (user) {
-            fetchOrders();
-        }
-    }, [user]);
+        if (!user) return;
+
+        fetchOrders();
+    }, [user, fetchOrders]);
+
+    useEffect(() => {
+        if (!user) return;
+
+        /* Nothing left to watch once every order has finished. */
+        if (orders.length > 0 && orders.every((order) => isTerminal(order.status))) return;
+
+        const interval = setInterval(() => fetchOrders({ announce: true }), POLL_MS);
+        return () => clearInterval(interval);
+    }, [user, orders, fetchOrders]);
 
     return (
         <>
@@ -45,39 +79,46 @@ const MyOrders = () => {
                 <div className="space-y-5">
                     <h2 className="text-lg font-medium mt-6">My Orders</h2>
                     {loading ? <Loading /> : (<div className="max-w-5xl border-t border-gray-300 text-sm">
-                        {orders.map((order, index) => (
-                            <div key={index} className="flex flex-col md:flex-row gap-5 justify-between p-5 border-b border-gray-300">
-                                <div className="flex-1 flex gap-5 max-w-80">
-                                    <Image
-                                        className="max-w-16 max-h-16 object-cover"
-                                        src={assets.box_icon}
-                                        alt=""
-                                    />
-                                    <p className="flex flex-col gap-3">
-                                        <span className="font-medium text-base">
-                                            {order.items.map((item) => item.product.name + ` x ${item.quantity}`).join(", ")}
-                                        </span>
-                                        <span>Items : {order.items.length}</span>
-                                    </p>
+                        {orders.map((order) => (
+                            <div key={order._id} className="flex flex-col gap-5 p-5 border-b border-gray-300">
+                                <div className="flex flex-col md:flex-row gap-5 justify-between">
+                                    <div className="flex-1 flex gap-5 max-w-80">
+                                        <Image
+                                            className="max-w-16 max-h-16 object-cover"
+                                            src={assets.box_icon}
+                                            alt=""
+                                        />
+                                        <p className="flex flex-col gap-3">
+                                            <span className="font-medium text-base">
+                                                {order.items.map((item) => item.product.name + ` x ${item.quantity}`).join(", ")}
+                                            </span>
+                                            <span>Items : {order.items.length}</span>
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p>
+                                            <span className="font-medium">{order.address.fullName}</span>
+                                            <br />
+                                            <span >{order.address.area}</span>
+                                            <br />
+                                            <span>{`${order.address.city}, ${order.address.state}`}</span>
+                                            <br />
+                                            <span>{order.address.phoneNumber}</span>
+                                        </p>
+                                    </div>
+                                    <p className="font-medium my-auto">{formatNpr(order.amount)}</p>
+                                    <div>
+                                        <p className="flex flex-col">
+                                            <span>Method : {order.paymentMethod}</span>
+                                            <span>Date : {new Date(order.date).toLocaleDateString()}</span>
+                                            <span>Payment : {order.paymentStatus}</span>
+                                        </p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p>
-                                        <span className="font-medium">{order.address.fullName}</span>
-                                        <br />
-                                        <span >{order.address.area}</span>
-                                        <br />
-                                        <span>{`${order.address.city}, ${order.address.state}`}</span>
-                                        <br />
-                                        <span>{order.address.phoneNumber}</span>
-                                    </p>
-                                </div>
-                                <p className="font-medium my-auto">{currency}{order.amount}</p>
-                                <div>
-                                    <p className="flex flex-col">
-                                        <span>Method : COD</span>
-                                        <span>Date : {new Date(order.date).toLocaleDateString()}</span>
-                                        <span>Payment : Pending</span>
-                                    </p>
+
+                                <div className="flex flex-col gap-4">
+                                    <OrderStatusBadge status={order.status} />
+                                    <OrderTracker status={order.status} history={order.statusHistory} />
                                 </div>
                             </div>
                         ))}

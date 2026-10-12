@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { ORDER_STATUSES } from "@/lib/orderStatus";
 
 
 const orderSchema = new mongoose.Schema({
@@ -30,9 +31,24 @@ const orderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["order placed", "pending", "shipped", "delivered", "cancelled"],
+    enum: ORDER_STATUSES,
     default: "order placed",
   },
+  /* Every status the order has held, so the buyer's tracker can show when
+     each step happened instead of only where the order is now. */
+  statusHistory: [
+    {
+      status: {
+        type: String,
+        enum: ORDER_STATUSES,
+        required: true,
+      },
+      at: {
+        type: Date,
+        default: Date.now,
+      },
+    },
+  ],
   paymentMethod: {
     type: String,
     enum: ["COD", "Khalti", "eSewa", "Stripe"],

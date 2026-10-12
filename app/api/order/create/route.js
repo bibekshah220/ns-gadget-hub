@@ -96,6 +96,8 @@ export async function POST(req) {
 
     /* Persist the order before talking to any gateway, so the callback has
        something to bind its reference to. */
+    const initialStatus = paymentMethod === "COD" ? "order placed" : "pending";
+
     const order = await Order.create({
       userId,
       addressId: String(deliveryAddress._id),
@@ -103,7 +105,8 @@ export async function POST(req) {
       totalAmount,
       paymentMethod,
       paymentStatus: "Pending",
-      status: paymentMethod === "COD" ? "order placed" : "pending",
+      status: initialStatus,
+      statusHistory: [{ status: initialStatus, at: new Date() }],
     });
 
     const orderIdStr = String(order._id);

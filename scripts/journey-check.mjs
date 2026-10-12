@@ -15,6 +15,7 @@ const BASE = process.env.CHECK_BASE_URL || "http://localhost:3100";
 const stamp = Date.now();
 const seller = { name: "Check Seller", email: `check_seller_${stamp}@example.com`, password: "Seller-password-123" };
 const buyer = { name: "Check Buyer", email: `check_buyer_${stamp}@example.com`, password: "Buyer-password-123" };
+const rival = { name: "Check Rival", email: `check_rival_${stamp}@example.com`, password: "Rival-password-123" };
 
 const ok = (name) => console.log(`  PASS  ${name}`);
 
@@ -90,6 +91,7 @@ const cloudinaryCanUpload = async () => {
 
 const sellerSession = actor();
 const buyerSession = actor();
+const rivalSession = actor();
 let productId;
 let orderId;
 let uploadedPublicIds = [];
@@ -314,6 +316,68 @@ try {
   assert.equal(r.json.address.length, 0, "seller must not see the buyer's addresses");
   ok("one account cannot read another's orders or addresses");
 
+  // --- order lifecycle: seller drives it, buyer sees every step ---
+  const statusOf = async (session) => {
+    const res = await session.call("/api/order/list");
+    return res.json.orders.find((o) => o._id === orderId);
+  };
+
+  const setStatus = (session, status) =>
+    session.call("/api/order/update-status", { method: "POST", body: { orderId, status } });
+
+  r = await setStatus(buyerSession, "approved");
+  assert.equal(r.status, 401, "a buyer must not be able to approve their own order");
+
+  r = await setStatus(sellerSession, "completed");
+  assert.equal(r.status, 400, "an order cannot jump straight from placed to completed");
+  ok("status endpoint refuses a buyer and refuses skipped steps");
+
+  r = await sellerSession.call("/api/auth/register", { method: "POST", body: rival });
+  assert.equal(r.status, 201, JSON.stringify(r.json));
+  await db.collection("users").updateOne(
+    { _id: new mongoose.Types.ObjectId(r.json.user._id) },
+    { $set: { role: "seller" } },
+  );
+  /* Registering re-pointed sellerSession's cookie at the new account, so sign
+     the real seller back in before continuing. */
+  await rivalSession.call("/api/auth/login", { method: "POST", body: { email: rival.email, password: rival.password } });
+  await sellerSession.call("/api/auth/login", { method: "POST", body: { email: seller.email, password: seller.password } });
+
+  r = await setStatus(rivalSession, "approved");
+  assert.equal(r.status, 401, "a seller with no product on the order must not touch it");
+  ok("a seller cannot move another seller's order");
+
+  r = await setStatus(sellerSession, "approved");
+  assert.equal(r.status, 200, JSON.stringify(r.json));
+  assert.equal(r.json.changed, true);
+
+  let seen = await statusOf(buyerSession);
+  assert.equal(seen.status, "approved", "buyer sees the approval");
+  assert.ok(seen.statusHistory.some((entry) => entry.status === "approved"), "approval is timestamped in history");
+  ok("seller approves, buyer's order list shows approved with a history entry");
+
+  r = await setStatus(sellerSession, "approved");
+  assert.equal(r.json.changed, false, "re-sending the same status must not write again");
+  seen = await statusOf(buyerSession);
+  assert.equal(
+    seen.statusHistory.filter((entry) => entry.status === "approved").length,
+    1,
+    "no duplicate history row for an unchanged status",
+  );
+  ok("re-sending the current status is a no-op");
+
+  for (const next of ["shipped", "delivered", "completed"]) {
+    r = await setStatus(sellerSession, next);
+    assert.equal(r.status, 200, `${next}: ${JSON.stringify(r.json)}`);
+    seen = await statusOf(buyerSession);
+    assert.equal(seen.status, next, `buyer sees ${next}`);
+  }
+  ok("buyer tracks the order through shipped, delivered and completed");
+
+  r = await setStatus(sellerSession, "cancelled");
+  assert.equal(r.status, 400, "a completed order cannot be cancelled");
+  ok("completed is terminal");
+
   // --- payment callbacks cannot settle a COD order ---
   r = await actor().call(`/api/payment/khalti/verify?pidx=made-up&purchase_order_id=${orderId}`);
   assert.equal(r.status, 307);
@@ -326,7 +390,7 @@ try {
   console.log("\nALL JOURNEY CHECKS PASSED");
 } finally {
   /* Remove everything this run created, whether it passed or failed. */
-  await db.collection("users").deleteMany({ email: { $in: [seller.email, buyer.email] } });
+  await db.collection("users").deleteMany({ email: { $in: [seller.email, buyer.email, rival.email] } });
   if (productId) await db.collection("products").deleteOne({ _id: new mongoose.Types.ObjectId(productId) });
   if (orderId) await db.collection("orders").deleteOne({ _id: new mongoose.Types.ObjectId(orderId) });
   await db.collection("addresses").deleteMany({ fullName: "Check Buyer" });
