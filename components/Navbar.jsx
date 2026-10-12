@@ -80,7 +80,7 @@ const Navbar = () => {
       <div className="flex items-center justify-between gap-4">
         <Link
           href="/"
-          className="text-xl md:text-2xl font-bold select-none rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-700 focus-visible:ring-offset-2"
+          className="text-xl md:text-2xl font-bold select-none whitespace-nowrap rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-700 focus-visible:ring-offset-2"
         >
           <span className="text-orange-600">N.S</span> Gadget Hub
         </Link>
@@ -133,7 +133,7 @@ const Navbar = () => {
           {user ? <AccountMenu /> : (
             <Link href="/login" className={`${tapTarget} gap-2 px-2`}>
               <Image src={assets.user_icon} alt="" />
-              Account
+              <span className="max-sm:hidden">Account</span>
             </Link>
           )}
 
