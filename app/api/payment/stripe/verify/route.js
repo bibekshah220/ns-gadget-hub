@@ -1,40 +1,43 @@
 import { NextResponse } from "next/server";
-import connectToDatabase from "@/config/db";
-import Order from "@/models/order";
 import Stripe from "stripe";
+import { completeOrderPayment, failOrderPayment } from "@/lib/payment";
+
+const redirect = (req, path) => NextResponse.redirect(new URL(path, req.nextUrl.origin));
 
 export async function GET(req) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const session_id = searchParams.get("session_id");
-    const order_id = searchParams.get("order_id");
+  const { searchParams } = new URL(req.url);
+  const session_id = searchParams.get("session_id");
+  const order_id = searchParams.get("order_id");
 
-    if (!session_id || !order_id) {
-      return NextResponse.redirect(new URL("/payment/failure", req.url));
+  try {
+    if (!session_id || !order_id || !process.env.STRIPE_SECRET_KEY) {
+      return redirect(req, "/payment/failure");
     }
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
     const session = await stripe.checkout.sessions.retrieve(session_id);
 
-    if (session.payment_status === "paid") {
-      await connectToDatabase();
-      await Order.findByIdAndUpdate(order_id, {
-        paymentStatus: "Completed",
-        transactionId: session.payment_intent || session_id,
-        status: "order placed" // Update order status as well
+    if (session.payment_status !== "paid") {
+      await failOrderPayment({
+        orderId: order_id,
+        paymentRef: session_id,
+        transactionId: session.payment_intent,
       });
-      return NextResponse.redirect(new URL("/payment/success", req.url));
-    } else {
-      await connectToDatabase();
-      await Order.findByIdAndUpdate(order_id, {
-        paymentStatus: "Failed",
-        transactionId: session.payment_intent || session_id
-      });
-      return NextResponse.redirect(new URL("/payment/failure", req.url));
+      return redirect(req, "/payment/failure");
     }
 
+    const result = await completeOrderPayment({
+      orderId: order_id,
+      provider: "Stripe",
+      paymentRef: session.id,
+      /* Stripe reports the charge in the smallest currency unit. */
+      paidAmount: session.amount_total / 100,
+      transactionId: session.payment_intent || session.id,
+    });
+
+    return redirect(req, result.ok ? "/payment/success" : "/payment/failure");
   } catch (error) {
     console.error("Stripe verification error:", error);
-    return NextResponse.redirect(new URL("/payment/failure", req.url));
+    return redirect(req, "/payment/failure");
   }
 }

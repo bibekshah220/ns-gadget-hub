@@ -1,57 +1,71 @@
 import { NextResponse } from "next/server";
-import connectToDatabase from "@/config/db";
-import Order from "@/models/order";
 import crypto from "crypto";
+import { completeOrderPayment, failOrderPayment } from "@/lib/payment";
+
+const redirect = (req, path) => NextResponse.redirect(new URL(path, req.nextUrl.origin));
 
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
     const data = searchParams.get("data");
+    const secretKey = process.env.ESEWA_SECRET_KEY;
 
-    if (!data) {
-      return NextResponse.redirect(new URL("/payment/failure", req.url));
+    /* No default secret: eSewa publishes its sandbox key, so a fallback would
+       let anyone sign their own "payment complete" callback. */
+    if (!data || !secretKey) {
+      return redirect(req, "/payment/failure");
     }
 
-    // Decode base64 data
-    const decodedData = Buffer.from(data, "base64").toString("utf-8");
-    const parsedData = JSON.parse(decodedData);
+    const parsed = JSON.parse(Buffer.from(data, "base64").toString("utf-8"));
+    const { transaction_code, status, total_amount, transaction_uuid, signed_field_names, signature } =
+      parsed;
 
-    const { transaction_code, status, total_amount, transaction_uuid, product_code, signed_field_names, signature } = parsedData;
+    if (typeof signed_field_names !== "string" || typeof signature !== "string") {
+      return redirect(req, "/payment/failure");
+    }
 
-    // Verify signature
-    const secretKey = process.env.ESEWA_SECRET_KEY || "8gBm/:&EnhH.1/q";
-    
-    // Construct message from signed_field_names
-    const fields = signed_field_names.split(",");
-    const messageParams = fields.map(field => `${field}=${parsedData[field] || ''}`);
-    const message = messageParams.join(",");
+    const message = signed_field_names
+      .split(",")
+      .map((field) => `${field}=${parsed[field] ?? ""}`)
+      .join(",");
 
-    const hash = crypto.createHmac("sha256", secretKey).update(message).digest("base64");
+    const expected = crypto
+      .createHmac("sha256", secretKey)
+      .update(message)
+      .digest("base64");
 
-    if (hash !== signature) {
+    const expectedBuf = Buffer.from(expected);
+    const signatureBuf = Buffer.from(signature);
+
+    if (
+      expectedBuf.length !== signatureBuf.length ||
+      !crypto.timingSafeEqual(expectedBuf, signatureBuf)
+    ) {
       console.error("eSewa signature verification failed");
-      return NextResponse.redirect(new URL("/payment/failure", req.url));
+      return redirect(req, "/payment/failure");
     }
 
-    if (status === "COMPLETE") {
-      await connectToDatabase();
-      await Order.findByIdAndUpdate(transaction_uuid, {
-        paymentStatus: "Completed",
+    if (status !== "COMPLETE") {
+      await failOrderPayment({
+        orderId: transaction_uuid,
+        paymentRef: transaction_uuid,
         transactionId: transaction_code,
-        status: "order placed" // Update order status as well
       });
-      return NextResponse.redirect(new URL("/payment/success", req.url));
-    } else {
-      await connectToDatabase();
-      await Order.findByIdAndUpdate(transaction_uuid, {
-        paymentStatus: "Failed",
-        transactionId: transaction_code
-      });
-      return NextResponse.redirect(new URL("/payment/failure", req.url));
+      return redirect(req, "/payment/failure");
     }
 
+    const result = await completeOrderPayment({
+      orderId: transaction_uuid,
+      provider: "eSewa",
+      paymentRef: transaction_uuid,
+      /* eSewa sends the amount with thousands separators. */
+      paidAmount: Number(String(total_amount).replace(/,/g, "")),
+      transactionId: transaction_code,
+    });
+
+    return redirect(req, result.ok ? "/payment/success" : "/payment/failure");
   } catch (error) {
     console.error("eSewa verification error:", error);
-    return NextResponse.redirect(new URL("/payment/failure", req.url));
+    return redirect(req, "/payment/failure");
   }
 }
