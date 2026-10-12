@@ -1,7 +1,7 @@
 import connectToDatabase from "@/config/db";
 import Product from "@/models/product";
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+import { SITE_URL as siteUrl } from "@/lib/site";
 
 export const revalidate = 3600;
 

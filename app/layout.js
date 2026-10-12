@@ -2,6 +2,7 @@ import { Outfit } from "next/font/google";
 import "./globals.css";
 import { AppContextProvider } from "@/context/AppContext";
 import { Toaster } from "react-hot-toast";
+import { SITE_URL } from "@/lib/site";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -9,10 +10,8 @@ const outfit = Outfit({
   display: "swap",
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-
 export const metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "N.S Gadget Hub — Buy Gadgets Online in Nepal",
     /* Page titles become "About us | N.S Gadget Hub". */
@@ -33,7 +32,7 @@ export const metadata = {
     type: "website",
     siteName: "N.S Gadget Hub",
     locale: "en_NP",
-    url: siteUrl,
+    url: "/",
     title: "N.S Gadget Hub — Buy Gadgets Online in Nepal",
     description:
       "Genuine gadgets delivered across Nepal. Cash on delivery, Khalti, eSewa and card.",
@@ -66,9 +65,9 @@ const structuredData = {
   "@graph": [
     {
       "@type": "OnlineStore",
-      "@id": `${siteUrl}/#store`,
+      "@id": `${SITE_URL}/#store`,
       name: "N.S Gadget Hub",
-      url: siteUrl,
+      url: SITE_URL,
       description:
         "Online gadget store in Nepal selling smartphones, laptops, headphones, smartwatches, cameras and accessories.",
       telephone: "+977-9847306600",
@@ -80,10 +79,10 @@ const structuredData = {
     },
     {
       "@type": "WebSite",
-      "@id": `${siteUrl}/#website`,
-      url: siteUrl,
+      "@id": `${SITE_URL}/#website`,
+      url: SITE_URL,
       name: "N.S Gadget Hub",
-      publisher: { "@id": `${siteUrl}/#store` },
+      publisher: { "@id": `${SITE_URL}/#store` },
     },
   ],
 };
