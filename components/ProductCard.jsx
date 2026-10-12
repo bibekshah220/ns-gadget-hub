@@ -1,61 +1,80 @@
-import { assets } from '@/assets/assets'
-import Image from 'next/image';
-import { useAppContext } from '@/context/AppContext';
+"use client";
+import Image from "next/image";
+import Link from "next/link";
+import { useAppContext } from "@/context/AppContext";
+import Stars from "@/components/Stars";
+
+const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
+
+/* The eyebrow is derived from the record, never decorative: a real saving or
+   a genuinely recent listing, otherwise nothing. */
+const eyebrowFor = (product, currency) => {
+  const saving = product.price - product.offerPrice;
+
+  if (saving > 0) {
+    return `Save ${currency}${saving.toLocaleString("en-IN")}`;
+  }
+
+  if (product.date && Date.now() - product.date < THIRTY_DAYS) {
+    return "New";
+  }
+
+  return null;
+};
 
 const ProductCard = ({ product }) => {
+  const { currency } = useAppContext();
+  const eyebrow = eyebrowFor(product, currency);
+  const outOfStock = product.stock === 0;
 
-    const { currency, router } = useAppContext()
+  return (
+    <Link
+      href={`/product/${product._id}`}
+      className="group flex flex-col h-full bg-white border border-gray-200/80 rounded-2xl p-5 transition-shadow duration-300 hover:shadow-[0_4px_24px_rgba(0,0,0,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
+    >
+      <div className="flex items-center justify-center aspect-square bg-white rounded-xl overflow-hidden">
+        <Image
+          src={product.image[0]}
+          alt={product.name}
+          width={600}
+          height={600}
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+        />
+      </div>
 
-    return (
-        <div
-            onClick={() => { router.push('/product/' + product._id); scrollTo(0, 0) }}
-            className="flex flex-col items-start gap-0.5 max-w-[200px] w-full cursor-pointer"
-        >
-            <div className="cursor-pointer group relative bg-gray-500/10 rounded-lg w-full h-52 flex items-center justify-center">
-                <Image
-                    src={product.image[0]}
-                    alt={product.name}
-                    className="group-hover:scale-105 transition object-cover w-4/5 h-4/5 md:w-full md:h-full"
-                    width={800}
-                    height={800}
-                />
-                <button className="absolute top-2 right-2 bg-white p-2 rounded-full shadow-md">
-                    <Image
-                        className="h-3 w-3"
-                        src={assets.heart_icon}
-                        alt="heart_icon"
-                    />
-                </button>
-            </div>
+      <div className="mt-5 flex flex-col flex-1">
+        {eyebrow && (
+          <p className="text-xs font-medium text-orange-600 mb-1.5">{eyebrow}</p>
+        )}
 
-            <p className="md:text-base font-medium pt-2 w-full truncate">{product.name}</p>
-            <p className="w-full text-xs text-gray-500/70 max-sm:hidden truncate">{product.description}</p>
-            <div className="flex items-center gap-2">
-                <p className="text-xs">{4.5}</p>
-                <div className="flex items-center gap-0.5">
-                    {Array.from({ length: 5 }).map((_, index) => (
-                        <Image
-                            key={index}
-                            className="h-3 w-3"
-                            src={
-                                index < Math.floor(4)
-                                    ? assets.star_icon
-                                    : assets.star_dull_icon
-                            }
-                            alt="star_icon"
-                        />
-                    ))}
-                </div>
-            </div>
+        <h3 className="text-sm md:text-base font-semibold text-gray-900 leading-snug line-clamp-2">
+          {product.name}
+        </h3>
 
-            <div className="flex items-end justify-between w-full mt-1">
-                <p className="text-base font-medium">{currency}{product.offerPrice}</p>
-                <button className=" max-sm:hidden px-4 py-1.5 text-gray-500 border border-gray-500/20 rounded-full text-xs hover:bg-slate-50 transition">
-                    Buy now
-                </button>
-            </div>
-        </div>
-    )
-}
+        {product.ratingCount > 0 && (
+          <p className="flex items-center gap-1.5 mt-2 text-xs text-gray-500">
+            <Stars value={product.ratingAvg} size={12} />
+            {product.ratingAvg} ({product.ratingCount})
+          </p>
+        )}
 
-export default ProductCard
+        <p className="mt-auto pt-4 text-sm md:text-base text-gray-900">
+          {currency}
+          {product.offerPrice.toLocaleString("en-IN")}
+          {product.price > product.offerPrice && (
+            <span className="ml-2 text-gray-400 line-through">
+              {currency}
+              {product.price.toLocaleString("en-IN")}
+            </span>
+          )}
+        </p>
+
+        {outOfStock && (
+          <p className="text-xs text-gray-500 mt-1">Out of stock</p>
+        )}
+      </div>
+    </Link>
+  );
+};
+
+export default ProductCard;
