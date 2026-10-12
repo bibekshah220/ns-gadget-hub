@@ -8,15 +8,25 @@ import PasswordRules from "@/components/PasswordRules";
 
 const Register = () => {
   const { fetchUserData, router } = useAppContext();
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "" });
   const [submitting, setSubmitting] = useState(false);
 
   const onSubmit = async (event) => {
     event.preventDefault();
+
+    if (form.password !== form.confirm) {
+      toast.error("The two passwords do not match");
+      return;
+    }
+
     setSubmitting(true);
 
     try {
-      const { data } = await axios.post("/api/auth/register", form);
+      const { data } = await axios.post("/api/auth/register", {
+        name: form.name,
+        email: form.email,
+        password: form.password,
+      });
 
       if (data.success) {
         await fetchUserData();
@@ -70,6 +80,15 @@ const Register = () => {
           />
           <PasswordRules value={form.password} />
         </div>
+        <AuthField
+          label="Confirm password"
+          type="password"
+          autoComplete="new-password"
+          required
+          minLength={8}
+          value={form.confirm}
+          onChange={(e) => setForm({ ...form, confirm: e.target.value })}
+        />
         <AuthSubmit disabled={submitting}>
           {submitting ? "Creating..." : "Create account"}
         </AuthSubmit>

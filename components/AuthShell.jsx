@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -19,15 +20,51 @@ const AuthShell = ({ title, subtitle, children, footer }) => (
   </>
 );
 
-export const AuthField = ({ label, ...props }) => (
-  <label className="flex flex-col gap-1 text-sm text-gray-600">
-    {label}
-    <input
-      className="px-3 py-2 border border-gray-300 rounded outline-none focus:border-orange-500"
-      {...props}
-    />
-  </label>
-);
+export const AuthField = ({ label, type = "text", ...props }) => {
+  const [revealed, setRevealed] = useState(false);
+  const isPassword = type === "password";
+
+  return (
+    <label className="flex flex-col gap-1 text-sm text-gray-600">
+      {label}
+      <span className="relative flex">
+        <input
+          type={isPassword && revealed ? "text" : type}
+          className={`w-full px-3 py-2 border border-gray-300 rounded outline-none focus:border-orange-500 ${
+            isPassword ? "pr-10" : ""
+          }`}
+          {...props}
+        />
+        {isPassword && (
+          <button
+            type="button"
+            onClick={() => setRevealed((shown) => !shown)}
+            aria-label={revealed ? "Hide password" : "Show password"}
+            aria-pressed={revealed}
+            /* tabIndex -1 keeps the tab order email -> password -> submit. */
+            tabIndex={-1}
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 transition"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z" />
+              <circle cx="12" cy="12" r="3" />
+              {revealed && <path d="m4 4 16 16" />}
+            </svg>
+          </button>
+        )}
+      </span>
+    </label>
+  );
+};
 
 export const AuthSubmit = ({ children, disabled }) => (
   <button
