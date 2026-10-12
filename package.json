@@ -5,16 +5,25 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
+    "build:check": "NEXT_DIST_DIR=.next-check next build",
+    "start:check": "NEXT_DIST_DIR=.next-check next start",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "check:auth": "node --env-file=.env scripts/auth-check.mjs",
+    "check:journey": "node --env-file=.env scripts/journey-check.mjs",
+    "check:cloudinary": "node --env-file=.env scripts/cloudinary-check.mjs",
+    "check:mail": "node --env-file=.env scripts/mail-check.mjs",
+    "role": "node --env-file=.env scripts/set-role.mjs",
+    "seed": "node --env-file=.env scripts/seed-products.mjs"
   },
   "dependencies": {
-    "@clerk/nextjs": "^7.4.3",
     "axios": "^1.17.0",
+    "bcryptjs": "^3.0.3",
     "cloudinary": "^2.10.0",
-    "inngest": "^3.54.2",
+    "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.6.3",
     "next": "^15.5.19",
+    "nodemailer": "^10.1.0",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "react-hot-toast": "^2.5.1",
