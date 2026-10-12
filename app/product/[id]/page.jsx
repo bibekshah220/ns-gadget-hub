@@ -7,12 +7,14 @@ import Footer from "@/components/Footer";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import Loading from "@/components/Loading";
+import Stars from "@/components/Stars";
+import ProductReviews from "@/components/ProductReviews";
 import { useAppContext } from "@/context/AppContext";
 const Product = () => {
 
     const { id } = useParams();
 
-    const { products, router, addToCart } = useAppContext()
+    const { products, router, addToCart, currency } = useAppContext()
 
     const [mainImage, setMainImage] = useState(null);
     const [productData, setProductData] = useState(null);
@@ -66,26 +68,24 @@ const Product = () => {
                         {productData.name}
                     </h1>
                     <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-0.5">
-                            <Image className="h-4 w-4" src={assets.star_icon} alt="star_icon" />
-                            <Image className="h-4 w-4" src={assets.star_icon} alt="star_icon" />
-                            <Image className="h-4 w-4" src={assets.star_icon} alt="star_icon" />
-                            <Image className="h-4 w-4" src={assets.star_icon} alt="star_icon" />
-                            <Image
-                                className="h-4 w-4"
-                                src={assets.star_dull_icon}
-                                alt="star_dull_icon"
-                            />
-                        </div>
-                        <p>(4.5)</p>
+                        {productData.ratingCount > 0 ? (
+                            <>
+                                <Stars value={productData.ratingAvg} size={16} />
+                                <p className="text-sm text-gray-600">
+                                    {productData.ratingAvg} ({productData.ratingCount})
+                                </p>
+                            </>
+                        ) : (
+                            <p className="text-sm text-gray-500">No reviews yet</p>
+                        )}
                     </div>
                     <p className="text-gray-600 mt-3">
                         {productData.description}
                     </p>
                     <p className="text-3xl font-medium mt-6">
-                        ${productData.offerPrice}
+                        {currency}{productData.offerPrice}
                         <span className="text-base font-normal text-gray-800/60 line-through ml-2">
-                            ${productData.price}
+                            {currency}{productData.price}
                         </span>
                     </p>
                     <hr className="bg-gray-600 my-6" />
@@ -120,13 +120,14 @@ const Product = () => {
                     </div>
                 </div>
             </div>
+            <ProductReviews productId={productData._id} />
             <div className="flex flex-col items-center">
                 <div className="flex flex-col items-center mb-4 mt-16">
                     <p className="text-3xl font-medium">Featured <span className="font-medium text-orange-600">Products</span></p>
                     <div className="w-28 h-0.5 bg-orange-600 mt-2"></div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 mt-6 pb-14 w-full">
-                    {products.slice(0, 5).map((product, index) => <ProductCard key={index} product={product} />)}
+                    {products.slice(0, 5).map((product) => <ProductCard key={product._id} product={product} />)}
                 </div>
                 <button className="px-8 py-2 mb-16 border rounded text-gray-500/70 hover:bg-slate-50/90 transition">
                     See more

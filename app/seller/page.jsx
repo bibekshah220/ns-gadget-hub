@@ -8,8 +8,6 @@ import { useAppContext } from "@/context/AppContext";
 
 const AddProduct = () => {
 
-  const { getToken } = useAppContext();
-
   const [files, setFiles] = useState([]);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -34,13 +32,7 @@ const AddProduct = () => {
     }
 
     try {
-      const token = await getToken();
-
-      const { data } = await axios.post("/api/product/add", formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const { data } = await axios.post("/api/product/add", formData);
 
       if (data.success) {
         toast.success(data.message || "Product added successfully");

@@ -1,17 +1,16 @@
-import { getAuth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/config/db";
 import authSeller from "@/lib/authSeller";
 import Order from "@/models/order";
 import Product from "@/models/product";
 import Address from "@/models/address";
+import { requireAuth } from "@/lib/auth";
 
 export async function GET(req) {
   try {
-    const { userId } = getAuth(req);
-    const isSeller = await authSeller(userId);
+    const user = await requireAuth(req);
 
-    if (!isSeller) {
+    if (!authSeller(user)) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
         { status: 401 },
@@ -21,7 +20,7 @@ export async function GET(req) {
     await connectToDatabase();
 
     /* The Order model has no sellerId, so derive the seller's product ids first. */
-    const sellerProducts = await Product.find({ sellerId: userId }).select("_id");
+    const sellerProducts = await Product.find({ sellerId: String(user._id) }).select("_id");
     const sellerProductIds = sellerProducts.map((product) => product._id.toString());
 
     const orders = await Order.find({

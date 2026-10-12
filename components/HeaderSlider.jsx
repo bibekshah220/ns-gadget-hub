@@ -1,3 +1,4 @@
+"use client";
 import { useState, useEffect } from "react";
 import { assets } from "@/assets/assets";
 import Image from "next/image";
@@ -10,7 +11,7 @@ const HeaderSlider = () => {
       offer: "Limited Time Offer 30% Off",
       buttonText1: "Buy now",
       buttonText2: "Find more",
-      imgSrc: assets.header_headphone_image,
+      imgSrc: "/images/hero-headphones.jpg",
     },
     {
       id: 2,
@@ -18,7 +19,7 @@ const HeaderSlider = () => {
       offer: "Hurry up only few lefts!",
       buttonText1: "Shop Now",
       buttonText2: "Explore Deals",
-      imgSrc: assets.header_playstation_image,
+      imgSrc: "/images/hero-console.jpg",
     },
     {
       id: 3,
@@ -26,7 +27,7 @@ const HeaderSlider = () => {
       offer: "Exclusive Deal 40% Off",
       buttonText1: "Order Now",
       buttonText2: "Learn More",
-      imgSrc: assets.header_macbook_image,
+      imgSrc: "/images/hero-laptop.jpg",
     },
   ];
 
@@ -58,24 +59,27 @@ const HeaderSlider = () => {
           >
             <div className="md:pl-8 mt-10 md:mt-0">
               <p className="md:text-base text-orange-600 pb-1">{slide.offer}</p>
-              <h1 className="max-w-lg md:text-[40px] md:leading-[48px] text-2xl font-semibold">
+              <h2 className="max-w-lg md:text-[40px] md:leading-[48px] text-2xl font-semibold">
                 {slide.title}
-              </h1>
+              </h2>
               <div className="flex items-center mt-4 md:mt-6 ">
                 <button className="md:px-10 px-7 md:py-2.5 py-2 bg-orange-600 rounded-full text-white font-medium">
                   {slide.buttonText1}
                 </button>
                 <button className="group flex items-center gap-2 px-6 py-2.5 font-medium">
                   {slide.buttonText2}
-                  <Image className="group-hover:translate-x-1 transition" src={assets.arrow_icon} alt="arrow_icon" />
+                  <Image className="group-hover:translate-x-1 transition" src={assets.arrow_icon} alt="" />
                 </button>
               </div>
             </div>
             <div className="flex items-center flex-1 justify-center">
               <Image
-                className="md:w-72 w-48"
+                className="md:w-72 w-48 rounded-xl shadow-md object-cover aspect-square"
                 src={slide.imgSrc}
-                alt={`Slide ${index + 1}`}
+                alt={slide.title}
+                width={700}
+                height={700}
+                priority={index === 0}
               />
             </div>
           </div>

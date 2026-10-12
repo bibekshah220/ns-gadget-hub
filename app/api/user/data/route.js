@@ -1,41 +1,15 @@
 import { NextResponse } from "next/server";
-import { getAuth } from "@clerk/nextjs/server";
-import connectToDatabase from "@/config/db";
-import User from "@/models/User";
-
-/**
- * Handles the GET request to fetch user data.
- * @param {Request} req 
- * @returns {Promise<Response>}
- */
+import { publicUser, requireAuth } from "@/lib/auth";
 
 export async function GET(req) {
-  try {
-    const { userId } = getAuth(req);
+  const user = await requireAuth(req);
 
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
-      );
-    }
-
-    await connectToDatabase();
-
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return NextResponse.json(
-        { success: false, message: "User not found" },
-        { status: 404 },
-      );
-    }
-
-    return NextResponse.json({ success: true, user }, { status: 200 });
-  } catch (error) {
+  if (!user) {
     return NextResponse.json(
-      { success: false, message: error.message },
-      { status: 500 },
+      { success: false, message: "Unauthorized" },
+      { status: 401 },
     );
   }
+
+  return NextResponse.json({ success: true, user: publicUser(user) }, { status: 200 });
 }

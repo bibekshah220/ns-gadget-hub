@@ -1,7 +1,6 @@
 "use client";
-import { useAuth, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 
@@ -17,33 +16,21 @@ export const AppContextProvider = (props) => {
   const currency = process.env.NEXT_PUBLIC_CURRENCY;
   const router = useRouter();
 
-  /* Clerk auth: current signed-in user and token getter for protected API calls. */
-  const { user } = useUser();
-  const { getToken } = useAuth();
+  /* Core client state. The session itself lives in an httpOnly cookie, so the
+     client only ever holds the profile the server hands back. */
+  const [products, setProducts] = useState([]);
+  const [userData, setUserData] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [cartItems, setCartItems] = useState({});
 
-  /* Core client state. */
-  const [products, setProducts] = useState([]); 
-  const [userData, setUserData] = useState(false); 
-  const [isSeller, setIsSeller] = useState(false); 
-  const [cartItems, setCartItems] = useState({}); 
-
-  /* Build the Authorization header from the Clerk token for protected requests. */
-  const getAuthHeaders = async () => {
-    const token = await getToken();
-
-    if (!token) {
-      throw new Error("Unauthorized");
-    }
-
-    return {
-      Authorization: `Bearer ${token}`,
-    };
-  };
+  const user = userData;
+  const isSeller = userData?.role === "seller" || userData?.role === "admin";
 
   /* Load the full product catalog from the API into state. */
   const fetchProductData = async () => {
     try {
       const { data } = await axios.get("/api/product/list");
+
       if (data.success) {
         setProducts(data.products);
       } else {
@@ -54,35 +41,39 @@ export const AppContextProvider = (props) => {
     }
   };
 
-  /* Fetch the signed-in user's record and hydrate the cart from the server. */
-  const fetchUserData = async () => {
+  /* Resolve the session cookie into a profile; a 401 simply means signed out. */
+  const fetchUserData = useCallback(async () => {
     try {
-      const headers = await getAuthHeaders();
-      const { data } = await axios.get("/api/user/data", {
-        headers,
-      });
+      const { data } = await axios.get("/api/auth/me");
+
       if (data.success) {
         setUserData(data.user);
         setCartItems(data.user.cartItems || {});
-      } else {
-        toast.error(data.message);
+        return data.user;
       }
-    } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Failed to fetch user account data",
-      );
+    } catch {
+      setUserData(null);
+      setCartItems({});
+    } finally {
+      setAuthLoading(false);
+    }
+
+    return null;
+  }, []);
+
+  const logout = async () => {
+    try {
+      await axios.post("/api/auth/logout");
+    } finally {
+      setUserData(null);
+      setCartItems({});
+      router.push("/login");
     }
   };
 
   /* Persist the cart to the backend for the logged-in user. */
   const syncCartWithServer = async (nextCart) => {
-    const headers = await getAuthHeaders();
-
-    const { data } = await axios.post(
-      "/api/cart/update",
-      { cartData: nextCart },
-      { headers },
-    );
+    const { data } = await axios.post("/api/cart/update", { cartData: nextCart });
 
     if (!data.success) {
       throw new Error(data.message || "Failed to update cart");
@@ -164,35 +155,22 @@ export const AppContextProvider = (props) => {
     return Math.floor(totalAmount * 100) / 100;
   };
 
-  /* Load products once on mount. */
+  /* Load products and resolve the session once on mount. */
   useEffect(() => {
     fetchProductData();
-  }, []);
-
-  /* Reflect the Clerk role so seller-only UI can gate on it. */
-  useEffect(() => {
-    setIsSeller(user?.publicMetadata?.role === "seller");
-  }, [user]);
-
-  /* Load user data when signed in; clear it on sign-out. */
-  useEffect(() => {
-    if (user) {
-      fetchUserData();
-    } else {
-      setUserData(false);
-      setCartItems({});
-    }
-  }, [user]);
+    fetchUserData();
+  }, [fetchUserData]);
 
   /* Everything exposed to consumers of the context. */
   const value = {
     user,
-    getToken,
+    authLoading,
+    logout,
     currency,
     router,
     isSeller,
-    setIsSeller,
     userData,
+    setUserData,
     fetchUserData,
     products,
     fetchProductData,

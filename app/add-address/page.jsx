@@ -4,13 +4,11 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Image from "next/image";
 import { useState } from "react";
-import { useAuth } from "@clerk/nextjs";
 import { useAppContext } from "@/context/AppContext";
 import axios from "axios";
 import toast from "react-hot-toast";
 
 const AddAddress = () => {
-    const { getToken } = useAuth();
     const { router } = useAppContext();
 
     const [address, setAddress] = useState({
@@ -25,10 +23,7 @@ const AddAddress = () => {
     const onSubmitHandler = async (e) => {
         e.preventDefault();
         try {
-            const token = await getToken();
-            const { data } = await axios.post("/api/user/add-address", address, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            const { data } = await axios.post("/api/user/add-address", address);
 
             if (data.success) {
                 toast.success(data.message);
@@ -111,7 +106,7 @@ const AddAddress = () => {
                 <Image
                     className="md:mr-16 mt-16 md:mt-0"
                     src={assets.my_location_image}
-                    alt="my_location_image"
+                    alt=""
                 />
             </div>
             <Footer />

@@ -80,7 +80,7 @@ const Cart = () => {
                           <button onClick={() => updateCartQuantity(product._id, cartItems[itemId] - 1)}>
                             <Image
                               src={assets.decrease_arrow}
-                              alt="decrease_arrow"
+                              alt=""
                               className="w-4 h-4"
                             />
                           </button>
@@ -88,7 +88,7 @@ const Cart = () => {
                           <button onClick={() => addToCart(product._id)}>
                             <Image
                               src={assets.increase_arrow}
-                              alt="increase_arrow"
+                              alt=""
                               className="w-4 h-4"
                             />
                           </button>

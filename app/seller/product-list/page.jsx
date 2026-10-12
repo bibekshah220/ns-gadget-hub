@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from "react";
-import { assets, productsDummyData } from "@/assets/assets";
+import { assets } from "@/assets/assets";
 import Image from "next/image";
 import { useAppContext } from "@/context/AppContext";
 import Footer from "@/components/seller/Footer";
@@ -10,20 +10,14 @@ import toast from "react-hot-toast";
 
 const ProductList = () => {
 
-  const { router, getToken } = useAppContext()
+  const { router } = useAppContext()
 
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
 
   const fetchSellerProduct = async () => {
     try {
-      const token = await getToken();
-
-      const { data } = await axios.get("/api/product/sellerList", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const { data } = await axios.get("/api/product/sellerList");
 
       if (data.success) {
         setProducts(data.products);

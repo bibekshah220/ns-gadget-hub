@@ -47,6 +47,12 @@ const orderSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  /* Gateway-side id (Stripe session, Khalti pidx, eSewa uuid) bound at checkout
+     so a verify callback cannot be replayed against a different order. */
+  paymentRef: {
+    type: String,
+    default: "",
+  },
 }, { timestamps: true });
 
 const Order = mongoose.models.Order || mongoose.model("Order", orderSchema);
