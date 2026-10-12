@@ -11,17 +11,14 @@ import Loading from "@/components/Loading";
 
 const MyOrders = () => {
 
-    const { currency, user, getToken } = useAppContext();
+    const { currency, user } = useAppContext();
 
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const fetchOrders = async () => {
         try {
-            const token = await getToken();
-            const { data } = await axios.get("/api/order/list", {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            const { data } = await axios.get("/api/order/list");
 
             if (data.success) {
                 setOrders(data.orders);
@@ -54,7 +51,7 @@ const MyOrders = () => {
                                     <Image
                                         className="max-w-16 max-h-16 object-cover"
                                         src={assets.box_icon}
-                                        alt="box_icon"
+                                        alt=""
                                     />
                                     <p className="flex flex-col gap-3">
                                         <span className="font-medium text-base">
