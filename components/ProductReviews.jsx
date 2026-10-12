@@ -114,7 +114,7 @@ const ProductReviews = ({ productId }) => {
           <button
             type="submit"
             disabled={submitting}
-            className="mt-3 px-8 py-2.5 bg-orange-600 text-white rounded-full font-medium hover:bg-orange-700 transition disabled:opacity-60"
+            className="mt-3 px-8 py-2.5 bg-orange-700 text-white rounded-full font-medium hover:bg-orange-800 transition disabled:opacity-60"
           >
             {submitting ? "Saving..." : "Submit review"}
           </button>
@@ -124,7 +124,7 @@ const ProductReviews = ({ productId }) => {
         </form>
       ) : (
         <p className="mt-4 text-gray-600">
-          <Link href="/login" className="text-orange-600 hover:underline">
+          <Link href="/login" className="text-orange-700 hover:underline">
             Sign in
           </Link>{" "}
           to leave a review.

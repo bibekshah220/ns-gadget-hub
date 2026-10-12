@@ -137,7 +137,7 @@ const Contact = () => {
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-10 py-2.5 bg-orange-600 text-white rounded-full font-medium hover:bg-orange-700 transition disabled:opacity-60"
+                className="px-10 py-2.5 bg-orange-700 text-white rounded-full font-medium hover:bg-orange-800 transition disabled:opacity-60"
               >
                 {submitting ? "Sending..." : "Send message"}
               </button>
@@ -151,7 +151,7 @@ const Contact = () => {
             {CHANNELS.map(({ label, value, href, note }) => (
               <div key={label} className="border border-gray-200 rounded-xl p-5">
                 <p className="text-sm text-gray-500">{label}</p>
-                <a href={href} className="block text-orange-600 font-medium mt-1 hover:underline break-all">
+                <a href={href} className="block text-orange-700 font-medium mt-1 hover:underline break-all">
                   {value}
                 </a>
                 <p className="text-xs text-gray-500 mt-1">{note}</p>
@@ -170,7 +170,7 @@ const Contact = () => {
                 href={DIRECTIONS_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-block text-sm text-orange-600 hover:underline mt-2"
+                className="inline-block text-sm text-orange-700 hover:underline mt-2"
               >
                 Get directions
               </a>
@@ -180,7 +180,7 @@ const Contact = () => {
               <p className="text-sm text-gray-500">Orders</p>
               <p className="text-sm text-gray-700 mt-1 leading-relaxed">
                 Track an order from{" "}
-                <a href="/my-orders" className="text-orange-600 hover:underline">
+                <a href="/my-orders" className="text-orange-700 hover:underline">
                   My Orders
                 </a>{" "}
                 once you are signed in.

@@ -113,13 +113,13 @@ const AboutUs = () => (
           </h2>
           <p className="text-gray-600 mt-2">
             Call{" "}
-            <a href="tel:+9779847306600" className="text-orange-600 hover:underline">
+            <a href="tel:+9779847306600" className="text-orange-700 hover:underline">
               +977-9847306600
             </a>{" "}
             or email{" "}
             <a
               href="mailto:contact@nsgadgethub.com"
-              className="text-orange-600 hover:underline"
+              className="text-orange-700 hover:underline"
             >
               contact@nsgadgethub.com
             </a>
@@ -128,7 +128,7 @@ const AboutUs = () => (
         </div>
         <Link
           href="/all-products"
-          className="px-10 py-2.5 bg-orange-600 text-white rounded-full font-medium hover:bg-orange-700 transition whitespace-nowrap"
+          className="px-10 py-2.5 bg-orange-700 text-white rounded-full font-medium hover:bg-orange-800 transition whitespace-nowrap"
         >
           Browse the shop
         </Link>

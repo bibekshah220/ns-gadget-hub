@@ -44,7 +44,7 @@ const ProductCard = ({ product }) => {
 
       <div className="mt-5 flex flex-col flex-1">
         {eyebrow && (
-          <p className="text-xs font-medium text-orange-600 mb-1.5">{eyebrow}</p>
+          <p className="text-xs font-medium text-orange-700 mb-1.5">{eyebrow}</p>
         )}
 
         <h3 className="text-sm md:text-base font-semibold text-gray-900 leading-snug line-clamp-2">
