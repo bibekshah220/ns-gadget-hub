@@ -1,24 +1,34 @@
 import { assets } from "@/assets/assets";
 import Image from "next/image";
+import Link from "next/link";
 
 const products = [
   {
     id: 1,
     image: "/images/feature-headphones.jpg",
+    alt: "Over-ear headphones on a desk",
     title: "Unparalleled Sound",
     description: "Experience crystal-clear audio with premium headphones.",
+    cta: "Shop headphones",
+    href: "/all-products?category=headphones",
   },
   {
     id: 2,
     image: "/images/feature-earbuds.jpg",
+    alt: "Wireless earbuds in their charging case",
     title: "Stay Connected",
     description: "Compact and stylish earphones for every occasion.",
+    cta: "Shop earbuds",
+    href: "/all-products?search=earbuds",
   },
   {
     id: 3,
     image: "/images/feature-laptop.jpg",
+    alt: "Open laptop on a work desk",
     title: "Power in Every Pixel",
     description: "Shop the latest laptops for work, gaming, and more.",
+    cta: "Shop laptops",
+    href: "/all-products?category=laptops",
   },
 ];
 
@@ -31,11 +41,11 @@ const FeaturedProduct = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-14 mt-12 md:px-14 px-4">
-        {products.map(({ id, image, title, description }) => (
+        {products.map(({ id, image, alt, title, description, cta, href }) => (
           <div key={id} className="relative group">
             <Image
               src={image}
-              alt={title}
+              alt={alt}
               width={700}
               height={500}
               className="group-hover:brightness-75 transition duration-300 w-full h-64 object-cover rounded-lg"
@@ -47,9 +57,12 @@ const FeaturedProduct = () => {
               <p className="text-sm lg:text-base leading-5 max-w-60">
                 {description}
               </p>
-              <button className="flex items-center gap-1.5 bg-orange-700 px-4 py-2 rounded">
-                Buy now <Image className="h-3 w-3" src={assets.redirect_icon} alt="" />
-              </button>
+              <Link
+                href={href}
+                className="inline-flex items-center gap-1.5 min-h-11 bg-orange-700 px-4 py-2 rounded hover:bg-orange-800 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
+              >
+                {cta} <Image className="h-3 w-3" src={assets.redirect_icon} alt="" />
+              </Link>
             </div>
           </div>
         ))}
