@@ -1,33 +1,11 @@
-'use client'
-import { useEffect } from 'react'
-import Navbar from '@/components/seller/Navbar'
-import Sidebar from '@/components/seller/Sidebar'
-import Loading from '@/components/Loading'
-import { useAppContext } from '@/context/AppContext'
+import SellerGuard from "@/components/seller/SellerGuard";
 
-const Layout = ({ children }) => {
-  const { user, isSeller, router } = useAppContext()
+export const metadata = {
+  title: "Seller Dashboard",
+  /* Private: never index the dashboard. */
+  robots: { index: false, follow: false },
+};
 
-  /* Redirect non-sellers away from the seller dashboard. */
-  useEffect(() => {
-    if (user && !isSeller) {
-      router.replace('/')
-    }
-  }, [user, isSeller])
-
-  if (!user || !isSeller) {
-    return <Loading />
-  }
-
-  return (
-    <div>
-      <Navbar />
-      <div className='flex w-full'>
-        <Sidebar />
-        {children}
-      </div>
-    </div>
-  )
+export default function SellerLayout({ children }) {
+  return <SellerGuard>{children}</SellerGuard>;
 }
-
-export default Layout
