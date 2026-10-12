@@ -1,18 +1,18 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { useAppContext } from "@/context/AppContext";
 import Stars from "@/components/Stars";
+import { formatNpr } from "@/lib/money";
 
 const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
 
 /* The eyebrow is derived from the record, never decorative: a real saving or
    a genuinely recent listing, otherwise nothing. */
-const eyebrowFor = (product, currency) => {
+const eyebrowFor = (product) => {
   const saving = product.price - product.offerPrice;
 
   if (saving > 0) {
-    return `Save ${currency}${saving.toLocaleString("en-IN")}`;
+    return `Save ${formatNpr(saving)}`;
   }
 
   if (product.date && Date.now() - product.date < THIRTY_DAYS) {
@@ -23,8 +23,7 @@ const eyebrowFor = (product, currency) => {
 };
 
 const ProductCard = ({ product }) => {
-  const { currency } = useAppContext();
-  const eyebrow = eyebrowFor(product, currency);
+  const eyebrow = eyebrowFor(product);
   const outOfStock = product.stock === 0;
 
   return (
@@ -59,12 +58,12 @@ const ProductCard = ({ product }) => {
         )}
 
         <p className="mt-auto pt-4 text-sm md:text-base text-gray-900">
-          {currency}
-          {product.offerPrice.toLocaleString("en-IN")}
+          {formatNpr(product.offerPrice)}
+          {/* Struck-through price only where the record carries a higher list
+              price; nothing here invents a discount. */}
           {product.price > product.offerPrice && (
             <span className="ml-2 text-gray-400 line-through">
-              {currency}
-              {product.price.toLocaleString("en-IN")}
+              {formatNpr(product.price)}
             </span>
           )}
         </p>

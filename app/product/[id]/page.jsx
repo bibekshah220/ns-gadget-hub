@@ -10,11 +10,12 @@ import Loading from "@/components/Loading";
 import Stars from "@/components/Stars";
 import ProductReviews from "@/components/ProductReviews";
 import { useAppContext } from "@/context/AppContext";
+import { formatNpr } from "@/lib/money";
 const Product = () => {
 
     const { id } = useParams();
 
-    const { products, router, addToCart, currency } = useAppContext()
+    const { products, router, addToCart } = useAppContext()
 
     const [mainImage, setMainImage] = useState(null);
     const [productData, setProductData] = useState(null);
@@ -83,10 +84,12 @@ const Product = () => {
                         {productData.description}
                     </p>
                     <p className="text-3xl font-medium mt-6">
-                        {currency}{productData.offerPrice}
-                        <span className="text-base font-normal text-gray-800/60 line-through ml-2">
-                            {currency}{productData.price}
-                        </span>
+                        {formatNpr(productData.offerPrice)}
+                        {productData.price > productData.offerPrice && (
+                            <span className="text-base font-normal text-gray-800/60 line-through ml-2">
+                                {formatNpr(productData.price)}
+                            </span>
+                        )}
                     </p>
                     <hr className="bg-gray-600 my-6" />
                     <div className="overflow-x-auto">

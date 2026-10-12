@@ -19,6 +19,7 @@ export const AppContextProvider = (props) => {
   /* Core client state. The session itself lives in an httpOnly cookie, so the
      client only ever holds the profile the server hands back. */
   const [products, setProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(true);
   const [userData, setUserData] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [cartItems, setCartItems] = useState({});
@@ -29,6 +30,7 @@ export const AppContextProvider = (props) => {
   /* Load the full product catalog from the API into state. */
   const fetchProductData = async () => {
     try {
+      setProductsLoading(true);
       const { data } = await axios.get("/api/product/list");
 
       if (data.success) {
@@ -38,6 +40,8 @@ export const AppContextProvider = (props) => {
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to fetch product data");
+    } finally {
+      setProductsLoading(false);
     }
   };
 
@@ -173,6 +177,7 @@ export const AppContextProvider = (props) => {
     setUserData,
     fetchUserData,
     products,
+    productsLoading,
     fetchProductData,
     cartItems,
     setCartItems,
