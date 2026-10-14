@@ -11,6 +11,12 @@ const TikTokIcon = () => (
   </svg>
 );
 
+const WhatsAppIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M12.04 2a9.9 9.9 0 0 0-8.46 15.06L2 22l5.06-1.52A9.9 9.9 0 1 0 12.04 2zm0 1.8a8.1 8.1 0 1 1-4.13 15.07l-.3-.18-3 .9.92-2.93-.19-.3A8.1 8.1 0 0 1 12.04 3.8zm-3.3 4.1c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1s.9 2.44 1.03 2.6c.13.17 1.76 2.8 4.33 3.82 2.14.84 2.58.67 3.04.63.46-.04 1.5-.61 1.72-1.2.21-.6.21-1.1.15-1.2-.06-.11-.23-.17-.48-.3-.25-.12-1.5-.74-1.73-.82-.23-.09-.4-.13-.57.12-.17.25-.65.82-.8.99-.14.17-.29.19-.54.06-.25-.12-1.06-.39-2.02-1.25-.75-.66-1.25-1.48-1.4-1.73-.14-.25-.01-.38.11-.5.11-.12.25-.3.38-.44.12-.15.16-.25.25-.42.08-.17.04-.31-.02-.44-.06-.12-.56-1.37-.78-1.87-.19-.44-.38-.38-.53-.39h-.45z" />
+  </svg>
+);
+
 const socialIcons = {
   facebook: <Image src={assets.facebook_icon} alt="" />,
   instagram: <Image src={assets.instagram_icon} alt="" />,
@@ -72,11 +78,12 @@ const Footer = () => {
               {whatsapp ? (
                 <p>
                   <a
-                    className="hover:underline transition"
+                    className="inline-flex items-center gap-1.5 hover:underline transition"
                     href={whatsapp}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
+                    <WhatsAppIcon />
                     Chat on WhatsApp
                   </a>
                 </p>

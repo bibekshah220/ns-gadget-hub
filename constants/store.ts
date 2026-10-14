@@ -1,15 +1,11 @@
-/* Storefront contact details. The TODO values are placeholders and must be
-   replaced before launch; nothing here is invented customer-facing data. */
+/* Storefront contact details. */
 export const STORE = {
   phone: "+977-9847306600",
   email: "contact@nsgadgethub.com",
-  /* TODO: add address */
-  address: "TODO: add address",
-  /* TODO: add store hours */
-  hours: "TODO: add store hours",
-  /* TODO: add the WhatsApp business number in full international form,
-     digits only, e.g. 9779800000000 */
-  whatsappNumber: "TODO",
+  address: "New Road, Kathmandu, Nepal",
+  hours: "Open daily, 8 AM to 10 PM",
+  /* Full international form, digits only. */
+  whatsappNumber: "9779847306600",
 };
 
 export const whatsappHref = (number: string) =>
