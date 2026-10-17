@@ -1,4 +1,4 @@
-import bcrypt from "bcryptjs";
+import { hashPassword } from "@/lib/passwordHash";
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/config/db";
 import User from "@/models/User";
@@ -49,7 +49,7 @@ export async function POST(req) {
       );
     }
 
-    user.password = await bcrypt.hash(password, 12);
+    user.password = await hashPassword(password);
     user.resetTokenHash = undefined;
     user.resetTokenExpires = undefined;
     /* Invalidate every session issued before the password changed. */

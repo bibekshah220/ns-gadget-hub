@@ -3,9 +3,7 @@ import connectToDatabase from "@/config/db";
 import User from "@/models/User";
 import { requireAuth } from "@/lib/auth";
 import { isValidObjectId } from "@/lib/validate";
-
-const MAX_CART_LINES = 100;
-const MAX_QUANTITY_PER_ITEM = 100;
+import { MAX_CART_LINES, MAX_QUANTITY_PER_ITEM } from "@/constants/cart";
 
 /* The cart is stored as a free-form object, so it is sanitised key by key
    rather than trusted as sent. */

@@ -18,6 +18,20 @@ const PAYMENT_METHODS = ["COD", "Khalti", "eSewa", "Stripe"];
 const badRequest = (message, status = 400) =>
   NextResponse.json({ success: false, message }, { status });
 
+/* Hands reserved units back when an order cannot be completed. */
+const releaseStock = async (reserved) => {
+  if (reserved.length === 0) {
+    return;
+  }
+
+  await Product.bulkWrite(
+    reserved.map(({ productId, quantity }) => ({
+      updateOne: { filter: { _id: productId }, update: { $inc: { stock: quantity } } },
+    })),
+    { ordered: false },
+  );
+};
+
 export async function POST(req) {
   try {
     const user = await requireAuth(req);
@@ -43,20 +57,25 @@ export async function POST(req) {
 
     await connectToDatabase();
 
-    /* The address must belong to the caller, not merely exist. */
-    const deliveryAddress = await Address.findOne({ _id: address, userId });
-
-    if (!deliveryAddress) {
-      return badRequest("Invalid delivery address");
-    }
-
     const productIds = items.map((item) => item.product);
 
     if (!productIds.every(isValidObjectId)) {
       return badRequest("Invalid product in cart");
     }
 
-    const products = await Product.find({ _id: { $in: productIds } });
+    /* Independent reads, so they go together rather than one after the other. */
+    const [deliveryAddress, products] = await Promise.all([
+      /* The address must belong to the caller, not merely exist. */
+      Address.findOne({ _id: address, userId }).lean(),
+      Product.find({ _id: { $in: productIds } })
+        .select("name offerPrice stock")
+        .lean(),
+    ]);
+
+    if (!deliveryAddress) {
+      return badRequest("Invalid delivery address");
+    }
+
     const productMap = new Map(
       products.map((product) => [product._id.toString(), product]),
     );
@@ -90,6 +109,31 @@ export async function POST(req) {
       subtotal += product.offerPrice * quantity;
     }
 
+    /* Reserve stock before writing the order.
+     *
+     * The check above is advisory only: between reading a product and writing
+     * the order, any number of other buyers can take the same unit. Each
+     * decrement is therefore conditional on the stock still being there, and
+     * whichever request loses the race is the one that gets nothing. Lines
+     * already taken are returned if a later line fails, so a part-filled order
+     * never holds inventory it did not sell.
+     */
+    const reserved = [];
+
+    for (const line of orderProducts) {
+      const taken = await Product.updateOne(
+        { _id: line.productId, stock: { $gte: line.quantity } },
+        { $inc: { stock: -line.quantity } },
+      );
+
+      if (taken.modifiedCount !== 1) {
+        await releaseStock(reserved);
+        return badRequest(`Not enough stock for ${productMap.get(line.productId)?.name ?? "an item"}`);
+      }
+
+      reserved.push(line);
+    }
+
     /* Apply Nepal VAT (13%) on top of the subtotal. */
     const tax = Math.floor(subtotal * NEPAL_VAT_RATE);
     const totalAmount = subtotal + tax;
@@ -98,16 +142,23 @@ export async function POST(req) {
        something to bind its reference to. */
     const initialStatus = paymentMethod === "COD" ? "order placed" : "pending";
 
-    const order = await Order.create({
-      userId,
-      addressId: String(deliveryAddress._id),
-      products: orderProducts,
-      totalAmount,
-      paymentMethod,
-      paymentStatus: "Pending",
-      status: initialStatus,
-      statusHistory: [{ status: initialStatus, at: new Date() }],
-    });
+    let order;
+
+    try {
+      order = await Order.create({
+        userId,
+        addressId: String(deliveryAddress._id),
+        products: orderProducts,
+        totalAmount,
+        paymentMethod,
+        paymentStatus: "Pending",
+        status: initialStatus,
+        statusHistory: [{ status: initialStatus, at: new Date() }],
+      });
+    } catch (error) {
+      await releaseStock(reserved);
+      throw error;
+    }
 
     const orderIdStr = String(order._id);
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -117,6 +168,7 @@ export async function POST(req) {
 
     if (paymentMethod === "Stripe") {
       if (!process.env.STRIPE_SECRET_KEY) {
+        await releaseStock(reserved);
         return badRequest("Stripe is not configured", 503);
       }
 
@@ -160,6 +212,7 @@ export async function POST(req) {
       payment_url = session.url;
     } else if (paymentMethod === "Khalti") {
       if (!process.env.KHALTI_SECRET_KEY) {
+        await releaseStock(reserved);
         return badRequest("Khalti is not configured", 503);
       }
 
@@ -185,6 +238,7 @@ export async function POST(req) {
       const khaltiData = await response.json();
 
       if (!khaltiData.pidx || !khaltiData.payment_url) {
+        await releaseStock(reserved);
         return badRequest("Failed to initiate Khalti payment");
       }
 
@@ -198,6 +252,7 @@ export async function POST(req) {
       /* No fallback: the published test secret would let anyone sign a
          "payment complete" callback for any order. */
       if (!secretKey || !merchantCode) {
+        await releaseStock(reserved);
         return badRequest("eSewa is not configured", 503);
       }
 

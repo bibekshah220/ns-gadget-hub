@@ -7,7 +7,7 @@
     "build": "next build",
     "build:check": "NEXT_DIST_DIR=.next-check next build",
     "start:check": "NEXT_DIST_DIR=.next-check next start",
-    "start": "next start",
+    "start": "UV_THREADPOOL_SIZE=${UV_THREADPOOL_SIZE:-16} next start",
     "lint": "next lint",
     "check:auth": "node --env-file=.env scripts/auth-check.mjs",
     "check:journey": "node --env-file=.env scripts/journey-check.mjs",

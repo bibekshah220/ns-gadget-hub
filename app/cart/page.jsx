@@ -7,7 +7,7 @@ import { useAppContext } from "@/context/AppContext";
 
 const Cart = () => {
 
-  const { products, router, cartItems, addToCart, updateCartQuantity, getCartCount } = useAppContext();
+  const { productsById, router, cartItems, addToCart, updateCartQuantity, getCartCount } = useAppContext();
 
   return (
     <>
@@ -40,7 +40,7 @@ const Cart = () => {
               </thead>
               <tbody>
                 {Object.keys(cartItems).map((itemId) => {
-                  const product = products.find(product => product._id === itemId);
+                  const product = productsById.get(itemId);
 
                   if (!product || cartItems[itemId] <= 0) return null;
 
@@ -84,7 +84,14 @@ const Cart = () => {
                               className="w-4 h-4"
                             />
                           </button>
-                          <input onChange={e => updateCartQuantity(product._id, Number(e.target.value))} type="number" value={cartItems[itemId]} className="w-8 border text-center appearance-none"></input>
+                          <input
+                            type="number"
+                            min="1"
+                            value={cartItems[itemId]}
+                            onChange={e => updateCartQuantity(product._id, e.target.valueAsNumber)}
+                            onBlur={e => e.target.value === "" && updateCartQuantity(product._id, cartItems[itemId])}
+                            className="w-12 border text-center appearance-none"
+                          />
                           <button onClick={() => addToCart(product._id)}>
                             <Image
                               src={assets.increase_arrow}
